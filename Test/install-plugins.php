@@ -98,8 +98,24 @@ if ($changes) {
 // tiene todas las tablas ni los valores predeterminados de venta
 
 // 1) instanciamos todos los modelos del núcleo para crear sus tablas con
-//    los datos por defecto (fuera de cualquier transacción)
-foreach (FacturaScripts\Core\Tools::folderScan(FacturaScripts\Core\Tools::folder('Core', 'Model')) as $fileName) {
+//    los datos por defecto (fuera de cualquier transacción). Primero los
+//    modelos base en el mismo orden que usa el instalador del núcleo
+//    (Wizard::initModels), porque folderScan no garantiza el orden y hay
+//    claves foráneas entre ellos.
+$baseModels = [
+    'AttachedFile', 'Diario', 'EstadoDocumento', 'FormaPago', 'Impuesto',
+    'Retencion', 'Serie', 'Provincia', 'Empresa', 'Ejercicio', 'Almacen',
+];
+foreach ($baseModels as $name) {
+    $className = '\\FacturaScripts\\Dinamic\\Model\\' . $name;
+    if (class_exists($className)) {
+        new $className();
+    }
+}
+
+$modelFiles = FacturaScripts\Core\Tools::folderScan(FacturaScripts\Core\Tools::folder('Core', 'Model'));
+sort($modelFiles);
+foreach ($modelFiles as $fileName) {
     if ('.php' !== substr($fileName, -4)) {
         continue;
     }
