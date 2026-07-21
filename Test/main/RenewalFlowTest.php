@@ -20,6 +20,7 @@
 
 namespace FacturaScripts\Test\Plugins;
 
+use FacturaScripts\Core\DataSrc\Almacenes;
 use FacturaScripts\Core\DataSrc\Empresas;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Core\WorkQueue;
@@ -48,7 +49,7 @@ final class RenewalFlowTest extends TestCase
 
     protected function setUp(): void
     {
-        if (empty(Empresas::default()->idempresa)) {
+        if (empty(Empresas::default()->idempresa) || empty(Almacenes::all())) {
             $this->markTestSkipped('Core default data is not installed');
         }
 

@@ -20,6 +20,7 @@
 
 namespace FacturaScripts\Test\Plugins;
 
+use FacturaScripts\Core\DataSrc\Almacenes;
 use FacturaScripts\Core\DataSrc\Empresas;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\Cliente;
@@ -44,7 +45,7 @@ final class QuoteGeneratorTest extends TestCase
     protected function setUp(): void
     {
         // estos tests necesitan los datos básicos de la instalación (empresa, almacén, serie)
-        if (empty(Empresas::default()->idempresa)) {
+        if (empty(Empresas::default()->idempresa) || empty(Almacenes::all())) {
             $this->markTestSkipped('Core default data is not installed');
         }
     }

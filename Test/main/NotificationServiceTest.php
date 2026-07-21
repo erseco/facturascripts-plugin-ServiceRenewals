@@ -20,6 +20,7 @@
 
 namespace FacturaScripts\Test\Plugins;
 
+use FacturaScripts\Core\DataSrc\Almacenes;
 use FacturaScripts\Core\DataSrc\Empresas;
 use FacturaScripts\Core\Model\WorkEvent;
 use FacturaScripts\Core\Tools;
@@ -235,6 +236,10 @@ final class NotificationServiceTest extends TestCase
     /** @return array{0: ServiceRenewal, 1: \FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle, 2: \FacturaScripts\Dinamic\Model\PresupuestoCliente} */
     private function makeQuoteScenario(string $email): array
     {
+        if (empty(Almacenes::all())) {
+            $this->markTestSkipped('No warehouse available to create documents');
+        }
+
         [$renewal, $cycle] = $this->makeRenewalScenario($email);
 
         $quote = (new QuoteGenerator())->generate($renewal, $cycle);
