@@ -26,6 +26,7 @@ use FacturaScripts\Core\DataSrc\Almacenes;
 use FacturaScripts\Core\DataSrc\Series;
 use FacturaScripts\Core\Lib\Calculator;
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Dinamic\Model\LineaPresupuestoCliente;
 use FacturaScripts\Dinamic\Model\PresupuestoCliente;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle;
@@ -58,6 +59,11 @@ final class QuoteGenerator
             $this->markFailed($cycle, 'Customer or product not found');
             return null;
         }
+
+        // fuera de la transacción: fuerza la creación de las tablas de
+        // documentos que falten (no se pueden crear tablas en transacción)
+        new PresupuestoCliente();
+        new LineaPresupuestoCliente();
 
         $db = new DataBase();
         $db->beginTransaction();

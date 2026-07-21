@@ -93,4 +93,49 @@ if ($changes) {
     echo "Dinamic deployed.\n";
 }
 
+// aprovisionamiento mínimo para los tests, igual que hace el núcleo en su
+// DefaultSettingsTrait: sin esto, una instalación inicializada por CLI no
+// tiene todas las tablas ni los valores predeterminados de venta
+
+// 1) instanciamos todos los modelos del núcleo para crear sus tablas con
+//    los datos por defecto (fuera de cualquier transacción)
+foreach (FacturaScripts\Core\Tools::folderScan(FacturaScripts\Core\Tools::folder('Core', 'Model')) as $fileName) {
+    if ('.php' !== substr($fileName, -4)) {
+        continue;
+    }
+
+    $className = '\\FacturaScripts\\Dinamic\\Model\\' . substr($fileName, 0, -4);
+    if (false === class_exists($className)
+        || false === is_subclass_of($className, FacturaScripts\Core\Template\ModelClass::class)
+        || (new ReflectionClass($className))->isAbstract()) {
+        continue;
+    }
+
+    new $className();
+}
+echo "Core tables ready.\n";
+
+// 2) settings predeterminados del país (incluye serie, forma de pago, etc.)
+$codpais = FacturaScripts\Core\DataSrc\Paises::default()->codpais;
+$defaultsFile = FS_FOLDER . '/Core/Data/Codpais/' . $codpais . '/default.json';
+if (file_exists($defaultsFile)) {
+    $defaultValues = json_decode((string)file_get_contents($defaultsFile), true) ?? [];
+    foreach ($defaultValues as $group => $values) {
+        foreach ($values as $key => $value) {
+            FacturaScripts\Core\Tools::settingsSet($group, $key, $value);
+        }
+    }
+}
+
+// 3) almacén predeterminado de la empresa
+$idempresa = FacturaScripts\Core\Tools::settings('default', 'idempresa', 1);
+foreach (FacturaScripts\Dinamic\Model\Almacen::all() as $warehouse) {
+    if ((int)$warehouse->idempresa === (int)$idempresa) {
+        FacturaScripts\Core\Tools::settingsSet('default', 'codalmacen', $warehouse->codalmacen);
+    }
+}
+
+FacturaScripts\Core\Tools::settingsSave();
+echo "Default settings ready.\n";
+
 echo "Done.\n";
