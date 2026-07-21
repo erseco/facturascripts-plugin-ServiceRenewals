@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This file is part of ServiceRenewals plugin for FacturaScripts.
+    Copyright (C) 2026 Ernesto Serrano <info@ernesto.es>
+-->
+<view>
+    <columns>
+        <group name="service" title="service" icon="fa-solid fa-arrows-rotate" numcolumns="12">
+            <column name="customer" numcolumns="4" order="100">
+                <widget type="autocomplete" fieldname="codcustomer" required="true">
+                    <values source="clientes" fieldcode="codcliente" fieldtitle="nombre"/>
+                </widget>
+            </column>
+            <column name="product" numcolumns="4" order="110">
+                <widget type="autocomplete" fieldname="idproduct" required="true">
+                    <values source="productos" fieldcode="idproducto" fieldtitle="descripcion"/>
+                </widget>
+            </column>
+            <column name="status" numcolumns="4" order="120">
+                <widget type="select" fieldname="status" required="true" translate="true">
+                    <values title="service-renewal-status-active">active</values>
+                    <values title="service-renewal-status-suspended">suspended</values>
+                    <values title="service-renewal-status-cancelled">cancelled</values>
+                    <values title="service-renewal-status-expired">expired</values>
+                </widget>
+            </column>
+            <column name="title" numcolumns="4" order="130">
+                <widget type="text" fieldname="title" maxlength="150"/>
+            </column>
+            <column name="service-identifier" numcolumns="4" order="140">
+                <widget type="text" fieldname="service_identifier" required="true" maxlength="150"/>
+            </column>
+            <column name="service-type" numcolumns="4" order="150">
+                <widget type="select" fieldname="service_type" translate="true">
+                    <values title="service-type-domain">domain</values>
+                    <values title="service-type-hosting">hosting</values>
+                    <values title="service-type-vps">vps</values>
+                    <values title="service-type-dedicated_server">dedicated_server</values>
+                    <values title="service-type-certificate">certificate</values>
+                    <values title="service-type-maintenance">maintenance</values>
+                    <values title="service-type-license">license</values>
+                    <values title="service-type-backup">backup</values>
+                    <values title="service-type-other">other</values>
+                </widget>
+            </column>
+            <column name="provider-name" numcolumns="4" order="160">
+                <widget type="text" fieldname="provider_name" maxlength="100"/>
+            </column>
+            <column name="external-reference" numcolumns="4" order="170">
+                <widget type="text" fieldname="external_reference" maxlength="100"/>
+            </column>
+        </group>
+        <group name="dates" title="dates" icon="fa-regular fa-calendar" numcolumns="12">
+            <column name="start-date" numcolumns="3" order="200">
+                <widget type="date" fieldname="start_date"/>
+            </column>
+            <column name="expiration-date" numcolumns="3" order="210">
+                <widget type="date" fieldname="expiration_date" required="true"/>
+            </column>
+            <column name="period-months" numcolumns="3" order="220">
+                <widget type="number" fieldname="period_months" decimal="0" min="1" step="1" required="true"/>
+            </column>
+        </group>
+        <group name="overrides" title="renewal-overrides" icon="fa-solid fa-sliders" numcolumns="12">
+            <column name="quote-lead-days" numcolumns="3" order="300">
+                <widget type="number" fieldname="quote_lead_days" decimal="0" min="0" step="1"/>
+            </column>
+            <column name="reminder-days" numcolumns="3" order="310">
+                <widget type="text" fieldname="reminder_days" maxlength="100"/>
+            </column>
+            <column name="email-override" numcolumns="3" order="320">
+                <widget type="text" fieldname="email_override" maxlength="255"/>
+            </column>
+            <column name="price-override" numcolumns="3" order="330">
+                <widget type="money" fieldname="price_override"/>
+            </column>
+            <column name="auto-generate-quote" numcolumns="4" order="340">
+                <widget type="select" fieldname="auto_generate_quote" translate="true">
+                    <values title="inherit-from-profile"></values>
+                    <values title="yes">1</values>
+                    <values title="no">0</values>
+                </widget>
+            </column>
+            <column name="auto-send-quote" numcolumns="4" order="350">
+                <widget type="select" fieldname="auto_send_quote" translate="true">
+                    <values title="inherit-from-profile"></values>
+                    <values title="yes">1</values>
+                    <values title="no">0</values>
+                </widget>
+            </column>
+            <column name="renewal-trigger" numcolumns="4" order="360">
+                <widget type="select" fieldname="renewal_trigger" translate="true">
+                    <values title="inherit-from-profile"></values>
+                    <values title="renewal-trigger-invoice">invoice</values>
+                    <values title="renewal-trigger-manual">manual</values>
+                </widget>
+            </column>
+        </group>
+        <group name="notes" title="observations" icon="fa-regular fa-note-sticky" numcolumns="12">
+            <column name="notes" numcolumns="12" order="400">
+                <widget type="textarea" fieldname="notes" rows="3"/>
+            </column>
+            <column name="created-at" numcolumns="3" order="410">
+                <widget type="datetime" fieldname="created_at" readonly="true"/>
+            </column>
+            <column name="updated-at" numcolumns="3" order="420">
+                <widget type="datetime" fieldname="updated_at" readonly="true"/>
+            </column>
+        </group>
+    </columns>
+</view>

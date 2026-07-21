@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This file is part of ServiceRenewals plugin for FacturaScripts.
+    Copyright (C) 2026 Ernesto Serrano <info@ernesto.es>
+-->
+<view>
+    <columns>
+        <column name="expiration-date" order="10">
+            <widget type="date" fieldname="previous_expiration_date"/>
+        </column>
+        <column name="next-expiration-date" order="20">
+            <widget type="date" fieldname="next_expiration_date"/>
+        </column>
+        <column name="status" order="30">
+            <widget type="text" fieldname="status_label"/>
+        </column>
+        <column name="quote" order="40">
+            <widget type="text" fieldname="quote_code"/>
+        </column>
+        <column name="invoice" order="50">
+            <widget type="text" fieldname="invoice_code"/>
+        </column>
+        <column name="quote-sent-at" order="60">
+            <widget type="datetime" fieldname="quote_sent_at"/>
+        </column>
+        <column name="renewed-at" order="70">
+            <widget type="datetime" fieldname="renewed_at"/>
+        </column>
+        <column name="last-error" order="80">
+            <widget type="text" fieldname="last_error"/>
+        </column>
+    </columns>
+    <rows>
+        <row type="status">
+            <option color="success" fieldname="status" title="service-renewal-cycle-status-renewed">renewed</option>
+            <option color="danger" fieldname="status" title="service-renewal-cycle-status-failed">failed</option>
+            <option color="info" fieldname="status" title="service-renewal-cycle-status-renewal_pending">renewal_pending</option>
+        </row>
+    </rows>
+</view>

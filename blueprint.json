@@ -1,0 +1,108 @@
+{
+  "$schema": "./assets/blueprints/blueprint-schema.json",
+  "meta": {
+    "title": "ServiceRenewals Playground Demo",
+    "author": "erseco",
+    "description": "Prueba ServiceRenewals en FacturaScripts Playground con el plugin cargado desde este repositorio. Gestiona renovaciones de dominios, alojamientos y otros servicios: avisos, presupuestos automáticos y renovación al facturar. Demo login: admin/admin."
+  },
+  "debug": {
+    "enabled": true
+  },
+  "landingPage": "/ListServiceRenewal",
+  "siteOptions": {
+    "title": "ServiceRenewals Playground Demo",
+    "locale": "es_ES",
+    "timezone": "Europe/Madrid"
+  },
+  "login": {
+    "username": "admin",
+    "password": "admin"
+  },
+  "plugins": [
+    "https://github.com/erseco/facturascripts-plugin-ServiceRenewals/archive/refs/heads/main.zip"
+  ],
+  "install": {
+    "codpais": "ESP",
+    "empresa": "Empresa Demo ServiceRenewals",
+    "cifnif": "125478938W",
+    "tipoidfiscal": "NIF",
+    "regimeniva": "General",
+    "defaultplan": true
+  },
+  "seed": {
+    "customers": [
+      {
+        "nombre": "Empresa Demo",
+        "razonsocial": "Empresa Demo, S.L.",
+        "cifnif": "B12345678",
+        "tipoidfiscal": "CIF",
+        "regimeniva": "General",
+        "email": "facturacion@example.com",
+        "telefono1": "+34910000001",
+        "direccion": "Calle Demo 1",
+        "ciudad": "Madrid",
+        "provincia": "Madrid",
+        "codpais": "ESP",
+        "_unique": "cifnif"
+      },
+      {
+        "nombre": "Asociación Ejemplo",
+        "razonsocial": "Asociación Ejemplo",
+        "cifnif": "G87654321",
+        "tipoidfiscal": "CIF",
+        "regimeniva": "General",
+        "email": "administracion@example.org",
+        "codpais": "ESP",
+        "_unique": "cifnif"
+      },
+      {
+        "nombre": "Profesional de Prueba",
+        "razonsocial": "Profesional de Prueba",
+        "cifnif": "12345678Z",
+        "tipoidfiscal": "NIF",
+        "regimeniva": "General",
+        "email": "profesional@example.net",
+        "codpais": "ESP",
+        "_unique": "cifnif"
+      }
+    ],
+    "products": [
+      {
+        "referencia": "DOM-COM",
+        "descripcion": "Renovación de dominio .com",
+        "precio": 14.95,
+        "_unique": "referencia"
+      },
+      {
+        "referencia": "HOST-ANUAL",
+        "descripcion": "Hosting gestionado anual",
+        "precio": 120.0,
+        "_unique": "referencia"
+      },
+      {
+        "referencia": "VPS-MENSUAL",
+        "descripcion": "Servidor VPS mensual",
+        "precio": 25.0,
+        "_unique": "referencia"
+      },
+      {
+        "referencia": "SSL-ANUAL",
+        "descripcion": "Certificado SSL anual",
+        "precio": 49.0,
+        "_unique": "referencia"
+      }
+    ]
+  },
+  "settings": {
+    "email": {
+      "email": "demo@ethereal.email",
+      "host": "smtp.ethereal.email",
+      "port": "587",
+      "user": "demo@ethereal.email",
+      "password": "ethereal-demo",
+      "mailer": "smtp",
+      "enc": "tls",
+      "lowsecure": "1"
+    }
+  }
+}

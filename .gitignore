@@ -1,0 +1,49 @@
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Estado de herramientas de agentes
+.omc/
+.claude/
+
+# Archivos de IDE y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.buildpath
+.aider*
+
+# Dependencias
+vendor/
+node_modules/
+composer.lock
+package-lock.json
+
+# Archivos de compilación y distribución
+dist/
+*.zip
+
+# Logs
+*.log
+
+# Archivos temporales
+tmp/
+temp/
+cache/
+themes/
+
+# Cachés de tests y herramientas
+.phpunit.result.cache
+.php-cs-fixer.cache
+
+# Archivos de entorno
+.env
+.env.local
+
+# Overrides de Docker (personalizaciones locales o generados por CI)
+docker-compose.override.yml

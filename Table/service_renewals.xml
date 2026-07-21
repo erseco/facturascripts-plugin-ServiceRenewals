@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This file is part of ServiceRenewals plugin for FacturaScripts.
+    Copyright (C) 2026 Ernesto Serrano <info@ernesto.es>
+-->
+<table>
+    <column>
+        <name>id</name>
+        <type>serial</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>codcustomer</name>
+        <type>character varying(10)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>profile_id</name>
+        <type>integer</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>idproduct</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>title</name>
+        <type>character varying(150)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>service_identifier</name>
+        <type>character varying(150)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>service_type</name>
+        <type>character varying(30)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>provider_name</name>
+        <type>character varying(100)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>external_reference</name>
+        <type>character varying(100)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>start_date</name>
+        <type>date</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>expiration_date</name>
+        <type>date</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>period_months</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>quote_lead_days</name>
+        <type>integer</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>reminder_days</name>
+        <type>character varying(100)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>email_override</name>
+        <type>character varying(255)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>price_override</name>
+        <type>double precision</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>auto_generate_quote</name>
+        <type>integer</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>auto_send_quote</name>
+        <type>integer</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>renewal_trigger</name>
+        <type>character varying(20)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>status</name>
+        <type>character varying(20)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>notes</name>
+        <type>text</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>created_at</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>updated_at</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <constraint>
+        <name>service_renewals_pkey</name>
+        <type>PRIMARY KEY (id)</type>
+    </constraint>
+    <constraint>
+        <name>ca_service_renewals_customers</name>
+        <type>FOREIGN KEY (codcustomer) REFERENCES clientes (codcliente) ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>ca_service_renewals_products</name>
+        <type>FOREIGN KEY (idproduct) REFERENCES productos (idproducto) ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>ca_service_renewals_profiles</name>
+        <type>FOREIGN KEY (profile_id) REFERENCES service_renewal_profiles (id) ON DELETE SET NULL ON UPDATE CASCADE</type>
+    </constraint>
+</table>

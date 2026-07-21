@@ -1,0 +1,54 @@
+---
+name: Release
+
+on:
+  push:
+    tags:
+      # FacturaScripts solo acepta versiones enteras o con un decimal
+      # (por ejemplo 1 o 1.2). Las etiquetas con triple punto (1.0.1)
+      # y las pre-release (1.0-beta) NO se aceptan intencionadamente.
+      - '[0-9]+'
+      - '[0-9]+.[0-9]+'
+      - 'v[0-9]+'
+      - 'v[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Update version in facturascripts.ini
+        run: sed -i "s/^version.*/version = ${{ steps.version.outputs.VERSION }}/" facturascripts.ini
+
+      - name: Create ZIP using git archive
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add facturascripts.ini
+          git commit -m "Update version to ${{ steps.version.outputs.VERSION }}" || true
+          git archive --format=zip --prefix=ServiceRenewals/ HEAD -o ServiceRenewals-${{ steps.version.outputs.VERSION }}.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: ServiceRenewals-${{ steps.version.outputs.VERSION }}.zip
+          generate_release_notes: true
+
+      - name: Publish to FacturaScripts forja
+        uses: erseco/action-facturascripts-publicar-forja@v1
+        with:
+          plugin-slug: servicerenewals
+          zip-path: ServiceRenewals-${{ steps.version.outputs.VERSION }}.zip
+          version: ${{ steps.version.outputs.VERSION }}
+          status: stable
+          forja-user: ${{ secrets.FS_FORJA_USER }}
+          forja-password: ${{ secrets.FS_FORJA_PASSWORD }}

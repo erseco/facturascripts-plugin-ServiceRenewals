@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This file is part of ServiceRenewals plugin for FacturaScripts.
+    Copyright (C) 2026 Ernesto Serrano <info@ernesto.es>
+-->
+<table>
+    <column>
+        <name>id</name>
+        <type>serial</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>cycle_id</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>notification_type</name>
+        <type>character varying(20)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>reminder_day</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>scheduled_at</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>sent_at</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>recipient</name>
+        <type>character varying(255)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>cc</name>
+        <type>character varying(255)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>bcc</name>
+        <type>character varying(255)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>subject</name>
+        <type>character varying(255)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>body</name>
+        <type>text</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>attachments</name>
+        <type>text</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>status</name>
+        <type>character varying(20)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>attempts</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>last_error</name>
+        <type>text</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>created_at</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>updated_at</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <constraint>
+        <name>service_renewal_notifications_pkey</name>
+        <type>PRIMARY KEY (id)</type>
+    </constraint>
+    <constraint>
+        <name>uniq_service_renewal_notifications_dedupe</name>
+        <type>UNIQUE (cycle_id, notification_type, reminder_day)</type>
+    </constraint>
+    <constraint>
+        <name>ca_service_renewal_notifications_cycles</name>
+        <type>FOREIGN KEY (cycle_id) REFERENCES service_renewal_cycles (id) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+</table>

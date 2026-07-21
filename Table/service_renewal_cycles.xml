@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This file is part of ServiceRenewals plugin for FacturaScripts.
+    Copyright (C) 2026 Ernesto Serrano <info@ernesto.es>
+-->
+<table>
+    <column>
+        <name>id</name>
+        <type>serial</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>service_renewal_id</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>previous_expiration_date</name>
+        <type>date</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>next_expiration_date</name>
+        <type>date</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>status</name>
+        <type>character varying(20)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>quote_id</name>
+        <type>integer</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>invoice_id</name>
+        <type>integer</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>quote_created_at</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>quote_sent_at</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>invoice_detected_at</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>renewed_at</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>last_error</name>
+        <type>text</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>created_at</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>updated_at</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <constraint>
+        <name>service_renewal_cycles_pkey</name>
+        <type>PRIMARY KEY (id)</type>
+    </constraint>
+    <constraint>
+        <name>uniq_service_renewal_cycles_renewal_date</name>
+        <type>UNIQUE (service_renewal_id, previous_expiration_date)</type>
+    </constraint>
+    <constraint>
+        <name>ca_service_renewal_cycles_renewals</name>
+        <type>FOREIGN KEY (service_renewal_id) REFERENCES service_renewals (id) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+</table>

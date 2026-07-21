@@ -1,0 +1,49 @@
+# Export ignore: estos archivos no se incluyen en git archive ni en las releases
+# Archivos de desarrollo y tests
+/.aider*                export-ignore
+/.claude/               export-ignore
+/.omc/                  export-ignore
+/.DS_Store              export-ignore
+/.editorconfig          export-ignore
+/.env                   export-ignore
+/.env.*                 export-ignore
+/.gitattributes         export-ignore
+/.github/               export-ignore
+/.gitignore             export-ignore
+/Test/                  export-ignore
+/tests/                 export-ignore
+
+# Documentación y ejemplos
+/docs/                  export-ignore
+/examples/              export-ignore
+/QUICKSTART.md          export-ignore
+/README.md              export-ignore
+
+# Archivos de instrucciones para agentes / IA
+/.agents/               export-ignore
+/AGENTS.md              export-ignore
+/CLAUDE.md              export-ignore
+/GEMINI.md              export-ignore
+
+# Demo del Playground (no necesaria en producción)
+/blueprint.json         export-ignore
+
+# Build y dependencias
+/vendor/                export-ignore
+/node_modules/          export-ignore
+/dist/                  export-ignore
+/composer.json          export-ignore
+/composer.lock          export-ignore
+/package.json           export-ignore
+/package-lock.json      export-ignore
+
+# Herramientas de desarrollo
+/docker/                export-ignore
+/docker-compose.yml     export-ignore
+/Makefile               export-ignore
+/phpunit.xml            export-ignore
+/phpunit-plugins.xml    export-ignore
+/.phpunit.result.cache  export-ignore
+/phpcs.xml              export-ignore
+/.php-cs-fixer.php      export-ignore
+/.php-cs-fixer.cache    export-ignore

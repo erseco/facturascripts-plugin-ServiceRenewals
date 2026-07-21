@@ -1,0 +1,69 @@
+---
+# Entorno de desarrollo de ServiceRenewals:
+#   - FacturaScripts con instalación desatendida y el plugin montado
+#   - MariaDB como base de datos
+#   - Mailpit como servidor SMTP de pruebas (interfaz web en el puerto 8025)
+services:
+  mariadb:
+    image: mariadb:lts
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: facturascripts
+      MYSQL_DATABASE: facturascripts
+      MYSQL_USER: facturascripts
+      MYSQL_PASSWORD: facturascripts
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  facturascripts:
+    image: erseco/alpine-facturascripts:main
+    restart: unless-stopped
+    ports:
+      - "8080:8000"
+    environment:
+      DB_HOST: mariadb
+      DB_NAME: facturascripts
+      DB_USER: facturascripts
+      DB_PASSWORD: facturascripts
+      FS_INITIAL_USER: admin
+      FS_INITIAL_PASS: admin
+      FS_LANG: es_ES
+      FS_TIMEZONE: Europe/Madrid
+      FS_DEBUG: "true"
+      FS_CODPAIS: ESP
+      FS_COMPANY_NAME: "Empresa Demo ServiceRenewals"
+      FS_COMPANY_CIF: 125478938W
+      FS_COMPANY_REGIMENIVA: General
+      # Datos de demostración (clientes y productos) desde el blueprint
+      FS_SEED_FILE: /var/www/html/Plugins/ServiceRenewals/blueprint.json
+      # Activa el plugin, configura el SMTP de Mailpit y crea las suscripciones demo
+      POST_CONFIGURE_COMMANDS: >-
+        php84 /var/www/html/Plugins/ServiceRenewals/docker/setup-servicerenewals.php
+      # Ejecuta el cron de FacturaScripts cada hora (necesario para las renovaciones)
+      RUN_CRON_TASKS: "true"
+    volumes:
+      - facturascripts_data:/var/www/html/volume
+      - ./:/var/www/html/Plugins/ServiceRenewals
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+
+volumes:
+  mariadb_data:
+  facturascripts_data:

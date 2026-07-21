@@ -1,0 +1,132 @@
+{#
+    This file is part of ServiceRenewals plugin for FacturaScripts.
+    Copyright (C) 2026 Ernesto Serrano <info@ernesto.es>
+#}
+{% extends "Master/MenuBghTemplate.html.twig" %}
+
+{% block body %}
+<div class="container-fluid mt-3">
+    <div class="row align-items-center mb-3">
+        <div class="col">
+            <h1 class="h4 mb-0">
+                <i class="fa-solid fa-gauge-high me-2" aria-hidden="true"></i>{{ i18n.trans('service-renewals-dashboard') }}
+            </h1>
+        </div>
+        <div class="col-auto">
+            <a href="ListServiceRenewal" class="btn btn-outline-primary btn-sm">
+                <i class="fa-solid fa-list me-1" aria-hidden="true"></i>{{ i18n.trans('service-renewals') }}
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-xl">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="fs-3 fw-bold">{{ fsc.cards.active }}</div>
+                    <div class="text-muted small">{{ i18n.trans('active-subscriptions') }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl">
+            <div class="card shadow-sm h-100 border-danger">
+                <div class="card-body text-center">
+                    <div class="fs-3 fw-bold text-danger">{{ fsc.cards.expired }}</div>
+                    <div class="text-muted small">{{ i18n.trans('expired') }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl">
+            <div class="card shadow-sm h-100 border-warning">
+                <div class="card-body text-center">
+                    <div class="fs-3 fw-bold">{{ fsc.cards.expiring7 }}</div>
+                    <div class="text-muted small">{{ i18n.trans('expiring-7-days') }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="fs-3 fw-bold">{{ fsc.cards.expiring30 }}</div>
+                    <div class="text-muted small">{{ i18n.trans('expiring-30-days') }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="fs-3 fw-bold">{{ fsc.cards.pendingQuotes }}</div>
+                    <div class="text-muted small">{{ i18n.trans('pending-quotes') }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="fs-3 fw-bold">{{ fsc.cards.pendingRenewals }}</div>
+                    <div class="text-muted small">{{ i18n.trans('pending-renewals') }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl">
+            <div class="card shadow-sm h-100 {{ fsc.cards.failedEmails > 0 ? 'border-danger' : '' }}">
+                <div class="card-body text-center">
+                    <div class="fs-3 fw-bold {{ fsc.cards.failedEmails > 0 ? 'text-danger' : '' }}">{{ fsc.cards.failedEmails }}</div>
+                    <div class="text-muted small">{{ i18n.trans('failed-emails') }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <i class="fa-regular fa-calendar me-2" aria-hidden="true"></i>{{ i18n.trans('upcoming-renewals') }}
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">{{ i18n.trans('customer') }}</th>
+                        <th scope="col">{{ i18n.trans('service') }}</th>
+                        <th scope="col">{{ i18n.trans('service-type') }}</th>
+                        <th scope="col">{{ i18n.trans('provider-name') }}</th>
+                        <th scope="col">{{ i18n.trans('expiration-date') }}</th>
+                        <th scope="col" class="text-end">{{ i18n.trans('days-left') }}</th>
+                        <th scope="col">{{ i18n.trans('status') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for renewal in fsc.upcoming %}
+                        {% set daysLeft = renewal.daysToExpiration(fsc.today) %}
+                        <tr>
+                            <td>
+                                <a href="{{ renewal.url() }}">{{ renewal.getCustomer().nombre }}</a>
+                            </td>
+                            <td>{{ renewal.title ?: renewal.service_identifier }}<br>
+                                <span class="text-muted small">{{ renewal.service_identifier }}</span>
+                            </td>
+                            <td>{{ i18n.trans('service-type-' ~ renewal.effectiveServiceType()) }}</td>
+                            <td>{{ renewal.provider_name }}</td>
+                            <td>{{ renewal.expiration_date }}</td>
+                            <td class="text-end">
+                                {% if daysLeft < 0 %}
+                                    <span class="badge text-bg-danger">{{ i18n.trans('expired-days-ago', {'%days%': -daysLeft}) }}</span>
+                                {% elseif daysLeft <= 7 %}
+                                    <span class="badge text-bg-warning text-dark">{{ i18n.trans('days-left-count', {'%days%': daysLeft}) }}</span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">{{ i18n.trans('days-left-count', {'%days%': daysLeft}) }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ i18n.trans('service-renewal-status-' ~ renewal.status) }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">{{ i18n.trans('no-data') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

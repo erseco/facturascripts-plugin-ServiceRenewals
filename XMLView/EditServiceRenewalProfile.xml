@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This file is part of ServiceRenewals plugin for FacturaScripts.
+    Copyright (C) 2026 Ernesto Serrano <info@ernesto.es>
+-->
+<view>
+    <columns>
+        <group name="renewal-profile" title="renewal-profile" icon="fa-solid fa-arrows-rotate" numcolumns="12">
+            <column name="product" display="none" order="0">
+                <widget type="text" fieldname="idproduct" readonly="true"/>
+            </column>
+            <column name="enabled" numcolumns="3" order="100">
+                <widget type="checkbox" fieldname="enabled"/>
+            </column>
+            <column name="service-type" numcolumns="3" order="110">
+                <widget type="select" fieldname="service_type" translate="true">
+                    <values title="service-type-domain">domain</values>
+                    <values title="service-type-hosting">hosting</values>
+                    <values title="service-type-vps">vps</values>
+                    <values title="service-type-dedicated_server">dedicated_server</values>
+                    <values title="service-type-certificate">certificate</values>
+                    <values title="service-type-maintenance">maintenance</values>
+                    <values title="service-type-license">license</values>
+                    <values title="service-type-backup">backup</values>
+                    <values title="service-type-other">other</values>
+                </widget>
+            </column>
+            <column name="default-period-months" numcolumns="3" order="120">
+                <widget type="number" fieldname="default_period_months" decimal="0" min="1" step="1" required="true"/>
+            </column>
+            <column name="quote-lead-days" numcolumns="3" order="130">
+                <widget type="number" fieldname="quote_lead_days" decimal="0" min="0" step="1"/>
+            </column>
+            <column name="reminder-days" numcolumns="3" order="140">
+                <widget type="text" fieldname="reminder_days" maxlength="100"/>
+            </column>
+            <column name="auto-generate-quote" numcolumns="3" order="150">
+                <widget type="checkbox" fieldname="auto_generate_quote"/>
+            </column>
+            <column name="auto-send-quote" numcolumns="3" order="160">
+                <widget type="checkbox" fieldname="auto_send_quote"/>
+            </column>
+            <column name="renewal-trigger" numcolumns="3" order="170">
+                <widget type="select" fieldname="renewal_trigger" translate="true">
+                    <values title="default"></values>
+                    <values title="renewal-trigger-invoice">invoice</values>
+                    <values title="renewal-trigger-manual">manual</values>
+                </widget>
+            </column>
+        </group>
+    </columns>
+</view>

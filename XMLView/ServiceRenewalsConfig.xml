@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This file is part of ServiceRenewals plugin for FacturaScripts.
+    Copyright (C) 2026 Ernesto Serrano <info@ernesto.es>
+-->
+<view>
+    <columns>
+        <group name="general" title="general" icon="fa-solid fa-gear" numcolumns="12">
+            <column name="name" display="none" order="0">
+                <widget type="text" fieldname="name" readonly="true" required="true"/>
+            </column>
+            <column name="enabled" numcolumns="3" order="100">
+                <widget type="checkbox" fieldname="enabled"/>
+            </column>
+            <column name="default-quote-lead-days" numcolumns="3" order="110">
+                <widget type="number" fieldname="default_quote_lead_days" decimal="0" min="0" step="1"/>
+            </column>
+            <column name="default-reminder-days" numcolumns="3" order="120">
+                <widget type="text" fieldname="default_reminder_days" maxlength="100"/>
+            </column>
+            <column name="max-attempts" numcolumns="3" order="130">
+                <widget type="number" fieldname="max_attempts" decimal="0" min="1" max="10" step="1"/>
+            </column>
+            <column name="default-auto-send-quote" numcolumns="4" order="140">
+                <widget type="checkbox" fieldname="default_auto_send_quote"/>
+            </column>
+            <column name="default-renewal-trigger" numcolumns="4" order="150">
+                <widget type="select" fieldname="default_renewal_trigger" translate="true">
+                    <values title="renewal-trigger-invoice">invoice</values>
+                    <values title="renewal-trigger-manual">manual</values>
+                </widget>
+            </column>
+            <column name="from-email" numcolumns="4" order="160">
+                <widget type="text" fieldname="from_email" maxlength="255"/>
+            </column>
+            <column name="global-cc" numcolumns="6" order="170">
+                <widget type="text" fieldname="global_cc" maxlength="255"/>
+            </column>
+            <column name="global-bcc" numcolumns="6" order="180">
+                <widget type="text" fieldname="global_bcc" maxlength="255"/>
+            </column>
+        </group>
+        <group name="quote-email" title="quote-email" icon="fa-regular fa-envelope" numcolumns="12">
+            <column name="quote-email-subject" numcolumns="12" order="200">
+                <widget type="text" fieldname="quote_email_subject" maxlength="255"/>
+            </column>
+            <column name="quote-email-body" numcolumns="12" order="210">
+                <widget type="textarea" fieldname="quote_email_body" rows="6"/>
+            </column>
+        </group>
+        <group name="reminder-email" title="reminder-email" icon="fa-regular fa-bell" numcolumns="12">
+            <column name="reminder-email-subject" numcolumns="12" order="300">
+                <widget type="text" fieldname="reminder_email_subject" maxlength="255"/>
+            </column>
+            <column name="reminder-email-body" numcolumns="12" order="310">
+                <widget type="textarea" fieldname="reminder_email_body" rows="6"/>
+            </column>
+        </group>
+    </columns>
+</view>

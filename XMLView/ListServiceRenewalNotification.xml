@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This file is part of ServiceRenewals plugin for FacturaScripts.
+    Copyright (C) 2026 Ernesto Serrano <info@ernesto.es>
+-->
+<view>
+    <columns>
+        <column name="type" order="10">
+            <widget type="text" fieldname="type_label"/>
+        </column>
+        <column name="reminder-days" order="20" display="right">
+            <widget type="number" fieldname="reminder_day" decimal="0"/>
+        </column>
+        <column name="recipient" order="30">
+            <widget type="text" fieldname="recipient"/>
+        </column>
+        <column name="subject" order="40">
+            <widget type="text" fieldname="subject"/>
+        </column>
+        <column name="status" order="50">
+            <widget type="text" fieldname="status_label"/>
+        </column>
+        <column name="attempts" order="60" display="right">
+            <widget type="number" fieldname="attempts" decimal="0"/>
+        </column>
+        <column name="sent-at" order="70">
+            <widget type="datetime" fieldname="sent_at"/>
+        </column>
+        <column name="last-error" order="80">
+            <widget type="text" fieldname="last_error"/>
+        </column>
+    </columns>
+    <rows>
+        <row type="status">
+            <option color="success" fieldname="status" title="sent">sent</option>
+            <option color="danger" fieldname="status" title="failed">failed</option>
+        </row>
+    </rows>
+</view>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This file is part of ServiceRenewals plugin for FacturaScripts.
+    Copyright (C) 2026 Ernesto Serrano <info@ernesto.es>
+
+    Vista compacta de suscripciones para las pestañas de cliente y producto.
+-->
+<view>
+    <columns>
+        <column name="customer" order="10">
+            <widget type="text" fieldname="customer_name"/>
+        </column>
+        <column name="service-identifier" order="20">
+            <widget type="text" fieldname="service_identifier"/>
+        </column>
+        <column name="provider-name" order="30">
+            <widget type="text" fieldname="provider_name"/>
+        </column>
+        <column name="expiration-date" order="40">
+            <widget type="date" fieldname="expiration_date"/>
+        </column>
+        <column name="days-left" order="50" display="right">
+            <widget type="number" fieldname="days_left" decimal="0">
+                <option color="danger">lt:0</option>
+                <option color="warning">lt:8</option>
+            </widget>
+        </column>
+        <column name="status" order="60">
+            <widget type="text" fieldname="status_label"/>
+        </column>
+    </columns>
+    <rows>
+        <row type="status">
+            <option color="warning" fieldname="status" title="suspended">suspended</option>
+            <option color="dark" fieldname="status" title="cancelled">cancelled</option>
+            <option color="danger" fieldname="status" title="expired">expired</option>
+        </row>
+    </rows>
+</view>
