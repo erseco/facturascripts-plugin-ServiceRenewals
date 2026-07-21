@@ -113,6 +113,24 @@ foreach ($baseModels as $name) {
     }
 }
 
+// reponemos los datos esenciales de las tablas semilla: el arranque del
+// núcleo puede haberlas creado vacías (por ejemplo, Migrations::fixSeries
+// crea series antes de que Dinamic/Data esté desplegado) y el CSV solo se
+// importa al crear la tabla. updateTableSQL usa INSERT .. ON DUPLICATE.
+$db = new FacturaScripts\Core\Base\DataBase();
+$db->connect();
+$seedTables = [
+    'divisas', 'impuestos', 'retenciones', 'diarios', 'series',
+    'formaspago', 'estados_documentos', 'almacenes',
+];
+foreach ($seedTables as $tableName) {
+    $seedSql = FacturaScripts\Core\Lib\Import\CSVImport::updateTableSQL($tableName);
+    if ('' !== $seedSql) {
+        $db->exec($seedSql);
+    }
+}
+echo "Seed data restored.\n";
+
 $modelFiles = FacturaScripts\Core\Tools::folderScan(FacturaScripts\Core\Tools::folder('Core', 'Model'));
 sort($modelFiles);
 foreach ($modelFiles as $fileName) {
