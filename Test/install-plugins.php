@@ -19,10 +19,19 @@
  */
 
 /**
- * Prepara los plugins listados en Test/Plugins/install-plugins.txt para
- * los tests. Este archivo se copia al directorio Test/ del núcleo de
- * FacturaScripts, igual que en los plugins de referencia.
+ * Activa y despliega los plugins listados en Test/Plugins/install-plugins.txt.
+ *
+ * Este archivo se copia al directorio Test/ del núcleo de FacturaScripts y se
+ * ejecuta antes de los tests (Makefile y CI). La activación es imprescindible:
+ * los XML de tablas de un plugin solo llegan a Dinamic/Table/ al desplegar
+ * los plugins activados, y sin ellos las tablas se crearían vacías.
  */
+
+if (PHP_SAPI !== 'cli') {
+    exit("This script must be run from the command line.\n");
+}
+
+define('FS_FOLDER', dirname(__DIR__));
 
 $listFile = __DIR__ . '/Plugins/install-plugins.txt';
 if (false === file_exists($listFile)) {
@@ -30,17 +39,58 @@ if (false === file_exists($listFile)) {
     exit(0);
 }
 
-$plugins = array_filter(array_map('trim', (array)file($listFile)));
-echo 'Plugins to prepare: ' . implode(', ', $plugins) . "\n";
+if (false === file_exists(FS_FOLDER . '/config.php')) {
+    echo "No config.php found, skipping plugin installation.\n";
+    exit(0);
+}
 
+/** @var Composer\Autoload\ClassLoader $loader */
+$loader = require FS_FOLDER . '/vendor/autoload.php';
+require_once FS_FOLDER . '/config.php';
+
+// registramos los namespaces del núcleo: el autoloader de composer puede
+// haberse regenerado sin ellos al instalar las herramientas de desarrollo
+$loader->addPsr4('FacturaScripts\\Core\\', FS_FOLDER . '/Core');
+$loader->addPsr4('FacturaScripts\\Dinamic\\', FS_FOLDER . '/Dinamic');
+
+use FacturaScripts\Core\Kernel;
+use FacturaScripts\Core\Plugins;
+
+Kernel::init();
+
+$plugins = array_filter(array_map('trim', (array)file($listFile)));
+echo 'Plugins to install: ' . implode(', ', $plugins) . "\n";
+
+// las clases de Dinamic extienden las del plugin, así que su namespace
+// también debe estar registrado antes del despliegue
 foreach ($plugins as $plugin) {
-    $folder = __DIR__ . '/../Plugins/' . $plugin;
-    if (is_dir($folder)) {
-        echo " - {$plugin}: found at Plugins/{$plugin}\n";
+    $loader->addPsr4('FacturaScripts\\Plugins\\' . $plugin . '\\', FS_FOLDER . '/Plugins/' . $plugin);
+}
+
+$changes = false;
+foreach ($plugins as $plugin) {
+    if (false === is_dir(FS_FOLDER . '/Plugins/' . $plugin)) {
+        echo " - {$plugin}: ERROR, not found at Plugins/{$plugin}\n";
+        exit(1);
+    }
+
+    if (in_array($plugin, Plugins::enabled(), true)) {
+        echo " - {$plugin}: already enabled\n";
         continue;
     }
 
-    echo " - {$plugin}: NOT found at Plugins/{$plugin}\n";
+    if (false === Plugins::enable($plugin)) {
+        echo " - {$plugin}: ERROR, could not be enabled\n";
+        exit(1);
+    }
+
+    echo " - {$plugin}: enabled\n";
+    $changes = true;
+}
+
+if ($changes) {
+    Plugins::deploy(true, true);
+    echo "Dinamic deployed.\n";
 }
 
 echo "Done.\n";
