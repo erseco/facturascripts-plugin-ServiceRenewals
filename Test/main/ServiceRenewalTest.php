@@ -34,6 +34,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ServiceRenewalTest extends TestCase
 {
+    use ServiceRenewalsFixtures;
+
     /** @var object[] */
     private $cleanup = [];
 
@@ -188,21 +190,10 @@ final class ServiceRenewalTest extends TestCase
     /** @return array{0: Cliente, 1: Producto} */
     private function makeFixtures(): array
     {
-        $customer = new Cliente();
-        $customer->nombre = 'Test Renewal Customer';
-        $customer->cifnif = substr(uniqid('', true), -9);
-        $customer->email = 'customer@example.com';
-        $this->assertTrue($customer->save(), 'Could not create the test customer');
-        $this->cleanup[] = $customer;
-
-        $product = new Producto();
-        $product->referencia = 'SRV-' . substr(uniqid('', true), -8);
-        $product->descripcion = 'Test renewal product';
-        $product->precio = 99.0;
-        $this->assertTrue($product->save(), 'Could not create the test product');
-        $this->cleanup[] = $product;
-
-        return [$customer, $product];
+        return [
+            $this->makeCustomer('Test Renewal Customer', 'customer@example.com'),
+            $this->makeServiceProduct('Test renewal product', 99.0),
+        ];
     }
 
     private function validRenewal(Cliente $customer, Producto $product): ServiceRenewal

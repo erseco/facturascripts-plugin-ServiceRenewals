@@ -195,7 +195,7 @@ class EditServiceRenewal extends EditController
             case 'ListServiceRenewalNotification':
                 $id = $this->getViewModelValue($mainViewName, 'id');
                 $cycleIds = [];
-                foreach (ServiceRenewalCycle::allWhereEq('service_renewal_id', $id) as $cycle) {
+                foreach (ServiceRenewalCycle::all([Where::eq('service_renewal_id', $id)]) as $cycle) {
                     $cycleIds[] = $cycle->id;
                 }
                 $where = empty($cycleIds) ? [Where::eq('cycle_id', -1)] : [Where::in('cycle_id', $cycleIds)];

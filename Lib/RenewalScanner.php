@@ -20,6 +20,7 @@
 
 namespace FacturaScripts\Plugins\ServiceRenewals\Lib;
 
+use FacturaScripts\Core\Where;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
 
 /**
@@ -54,7 +55,7 @@ final class RenewalScanner
     public static function findDue(string $today): array
     {
         $due = [];
-        foreach (ServiceRenewal::allWhereEq('status', ServiceRenewal::STATUS_ACTIVE) as $renewal) {
+        foreach (ServiceRenewal::all([Where::eq('status', ServiceRenewal::STATUS_ACTIVE)]) as $renewal) {
             if (self::isDue($renewal, $today)) {
                 $due[] = $renewal;
             }

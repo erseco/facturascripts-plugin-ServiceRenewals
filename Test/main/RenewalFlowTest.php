@@ -25,10 +25,8 @@ use FacturaScripts\Core\DataSrc\Empresas;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Core\WorkQueue;
 use FacturaScripts\Dinamic\Lib\BusinessDocumentGenerator;
-use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Dinamic\Model\PresupuestoCliente;
-use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\DocumentTransformationFinder;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleService;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalDateCalculator;
@@ -44,6 +42,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RenewalFlowTest extends TestCase
 {
+    use ServiceRenewalsFixtures;
+
     /** @var object[] */
     private $cleanup = [];
 
@@ -75,7 +75,7 @@ final class RenewalFlowTest extends TestCase
         // dentro del umbral de 30 días
         $processor->process('2026-07-15');
 
-        $cycles = ServiceRenewalCycle::allWhereEq('service_renewal_id', $renewal->id);
+        $cycles = ServiceRenewalCycle::all([Where::eq('service_renewal_id', $renewal->id)]);
         $this->assertCount(1, $cycles);
         $this->registerCycleCleanup($cycles[0]);
         $this->assertNotEmpty($cycles[0]->quote_id, 'The quote must be generated');
@@ -83,7 +83,7 @@ final class RenewalFlowTest extends TestCase
         // segunda ejecución: sin duplicados
         $processor->process('2026-07-15');
 
-        $cycles = ServiceRenewalCycle::allWhereEq('service_renewal_id', $renewal->id);
+        $cycles = ServiceRenewalCycle::all([Where::eq('service_renewal_id', $renewal->id)]);
         $this->assertCount(1, $cycles, 'No duplicated cycles');
         $count = PresupuestoCliente::count([Where::eq('codcliente', $renewal->codcustomer)]);
         $this->assertSame(1, $count, 'No duplicated quotes');
@@ -185,7 +185,7 @@ final class RenewalFlowTest extends TestCase
         $generator = new BusinessDocumentGenerator();
         $this->assertTrue(
             $generator->generate($quote, 'FacturaCliente', $lines, $quantities),
-            'Could not transform the quote into an invoice'
+            'Could not transform the quote into an invoice: ' . $this->recentCoreLogMessage()
         );
 
         $invoiceId = DocumentTransformationFinder::findInvoiceForQuote((int)$quote->idpresupuesto);
@@ -210,19 +210,8 @@ final class RenewalFlowTest extends TestCase
 
     private function makeRenewal(string $expiration, int $months, bool $manual): ServiceRenewal
     {
-        $customer = new Cliente();
-        $customer->nombre = 'Flow Test Customer ' . substr(uniqid('', true), -4);
-        $customer->cifnif = substr(uniqid('', true), -9);
-        $customer->email = 'flow@example.com';
-        $this->assertTrue($customer->save());
-        $this->cleanup[] = $customer;
-
-        $product = new Producto();
-        $product->referencia = 'SRV-' . substr(uniqid('', true), -8);
-        $product->descripcion = 'Flow test product';
-        $product->precio = 40.0;
-        $this->assertTrue($product->save());
-        $this->cleanup[] = $product;
+        $customer = $this->makeCustomer('Flow Test Customer', 'flow@example.com');
+        $product = $this->makeServiceProduct('Flow test product', 40.0);
 
         $renewal = new ServiceRenewal();
         $renewal->codcustomer = $customer->codcliente;
