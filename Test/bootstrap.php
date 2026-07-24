@@ -52,3 +52,8 @@ $loader = require FS_FOLDER . '/vendor/autoload.php';
 $loader->addPsr4('FacturaScripts\\Core\\', FS_FOLDER . '/Core');
 $loader->addPsr4('FacturaScripts\\Dinamic\\', FS_FOLDER . '/Dinamic');
 $loader->addPsr4('FacturaScripts\\Plugins\\ServiceRenewals\\', FS_FOLDER . '/Plugins/ServiceRenewals');
+// helpers de tests (traits): PHPUnit solo carga *Test.php, no los auto-descubre
+$fixturesTrait = __DIR__ . '/Plugins/ServiceRenewalsFixtures.php';
+if (is_file($fixturesTrait)) {
+    require_once $fixturesTrait;
+}

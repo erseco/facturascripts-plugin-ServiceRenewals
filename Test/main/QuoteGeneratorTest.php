@@ -23,9 +23,7 @@ namespace FacturaScripts\Test\Plugins;
 use FacturaScripts\Core\DataSrc\Almacenes;
 use FacturaScripts\Core\DataSrc\Empresas;
 use FacturaScripts\Core\Where;
-use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\PresupuestoCliente;
-use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\QuoteGenerator;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleService;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
@@ -39,6 +37,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class QuoteGeneratorTest extends TestCase
 {
+    use ServiceRenewalsFixtures;
+
     /** @var object[] */
     private $cleanup = [];
 
@@ -120,19 +120,8 @@ final class QuoteGeneratorTest extends TestCase
     /** @return array{0: ServiceRenewal, 1: ServiceRenewalCycle} */
     private function makeRenewalWithCycle(): array
     {
-        $customer = new Cliente();
-        $customer->nombre = 'Quote Test Customer ' . substr(uniqid('', true), -4);
-        $customer->cifnif = substr(uniqid('', true), -9);
-        $this->assertTrue($customer->save());
-        $this->cleanup[] = $customer;
-
-        $product = new Producto();
-        $product->referencia = 'SRV-' . substr(uniqid('', true), -8);
-        $product->descripcion = 'Quote test product';
-        $product->precio = 25.0;
-        $product->nostock = true;
-        $this->assertTrue($product->save());
-        $this->cleanup[] = $product;
+        $customer = $this->makeCustomer('Quote Test Customer');
+        $product = $this->makeServiceProduct('Quote test product', 25.0);
 
         $renewal = new ServiceRenewal();
         $renewal->codcustomer = $customer->codcliente;

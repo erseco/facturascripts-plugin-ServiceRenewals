@@ -21,8 +21,6 @@
 namespace FacturaScripts\Test\Plugins;
 
 use FacturaScripts\Core\Where;
-use FacturaScripts\Dinamic\Model\Cliente;
-use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleService;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalDateCalculator;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
@@ -36,6 +34,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RenewalCycleServiceTest extends TestCase
 {
+    use ServiceRenewalsFixtures;
+
     /** @var object[] */
     private $cleanup = [];
 
@@ -137,19 +137,8 @@ final class RenewalCycleServiceTest extends TestCase
 
     private function makeRenewal(string $expiration, int $months): ServiceRenewal
     {
-        $customer = new Cliente();
-        $customer->nombre = 'Cycle Test Customer';
-        $customer->cifnif = substr(uniqid('', true), -9);
-        $this->assertTrue($customer->save());
-        $this->cleanup[] = $customer;
-
-        $product = new Producto();
-        $product->referencia = 'SRV-' . substr(uniqid('', true), -8);
-        $product->descripcion = 'Cycle test product';
-        $product->precio = 10.0;
-        $product->nostock = true;
-        $this->assertTrue($product->save());
-        $this->cleanup[] = $product;
+        $customer = $this->makeCustomer('Cycle Test Customer');
+        $product = $this->makeServiceProduct('Cycle test product', 10.0);
 
         $renewal = new ServiceRenewal();
         $renewal->codcustomer = $customer->codcliente;

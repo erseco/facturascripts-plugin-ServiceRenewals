@@ -22,8 +22,6 @@ namespace FacturaScripts\Test\Plugins;
 
 use FacturaScripts\Core\Base\ControllerPermissions;
 use FacturaScripts\Core\DataSrc\Empresas;
-use FacturaScripts\Dinamic\Model\Cliente;
-use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Plugins\ServiceRenewals\Controller\EditServiceRenewal;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleService;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalDateCalculator;
@@ -39,6 +37,8 @@ use ReflectionMethod;
  */
 final class ControllerPermissionsTest extends TestCase
 {
+    use ServiceRenewalsFixtures;
+
     /** @var object[] */
     private $cleanup = [];
 
@@ -132,19 +132,8 @@ final class ControllerPermissionsTest extends TestCase
     /** @return array{0: ServiceRenewal, 1: ServiceRenewalCycle} */
     private function makePendingRenewal(): array
     {
-        $customer = new Cliente();
-        $customer->nombre = 'Perm Test Customer ' . substr(uniqid('', true), -4);
-        $customer->cifnif = substr(uniqid('', true), -9);
-        $this->assertTrue($customer->save());
-        $this->cleanup[] = $customer;
-
-        $product = new Producto();
-        $product->referencia = 'SRV-' . substr(uniqid('', true), -8);
-        $product->descripcion = 'Perm test product';
-        $product->precio = 15.0;
-        $product->nostock = true;
-        $this->assertTrue($product->save());
-        $this->cleanup[] = $product;
+        $customer = $this->makeCustomer('Perm Test Customer');
+        $product = $this->makeServiceProduct('Perm test product', 15.0);
 
         $renewal = new ServiceRenewal();
         $renewal->codcustomer = $customer->codcliente;

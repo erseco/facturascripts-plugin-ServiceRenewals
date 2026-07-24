@@ -26,8 +26,6 @@ use FacturaScripts\Core\Model\WorkEvent;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Core\WorkQueue;
-use FacturaScripts\Dinamic\Model\Cliente;
-use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\NotificationService;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\QuoteGenerator;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleService;
@@ -44,6 +42,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class NotificationServiceTest extends TestCase
 {
+    use ServiceRenewalsFixtures;
+
     /** @var object[] */
     private $cleanup = [];
 
@@ -203,20 +203,8 @@ final class NotificationServiceTest extends TestCase
     /** @return array{0: ServiceRenewal, 1: \FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle} */
     private function makeRenewalScenario(string $email): array
     {
-        $customer = new Cliente();
-        $customer->nombre = 'Mail Test Customer ' . substr(uniqid('', true), -4);
-        $customer->cifnif = substr(uniqid('', true), -9);
-        $customer->email = $email;
-        $this->assertTrue($customer->save());
-        $this->cleanup[] = $customer;
-
-        $product = new Producto();
-        $product->referencia = 'SRV-' . substr(uniqid('', true), -8);
-        $product->descripcion = 'Mail test product';
-        $product->precio = 30.0;
-        $product->nostock = true;
-        $this->assertTrue($product->save());
-        $this->cleanup[] = $product;
+        $customer = $this->makeCustomer('Mail Test Customer', $email);
+        $product = $this->makeServiceProduct('Mail test product', 30.0);
 
         $renewal = new ServiceRenewal();
         $renewal->codcustomer = $customer->codcliente;

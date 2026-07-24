@@ -15,7 +15,9 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
   cron) y a `RenewalFlowTest`. Reportado por analarama.
 - Tests de flujo presupuesto → factura fallaban en CI con el aviso
   «No hay suficiente stock»: los productos de servicio de prueba se crean
-  ahora con `nostock = true`.
+  ahora con `nostock = true`. Trait `ServiceRenewalsFixtures` (inspirado
+  en AiScan) centraliza clientes con `codpago`/`codserie` y productos de
+  servicio sin stock, y expone el log del núcleo al fallar la transformación.
 
 ## [1.0] - 2026-07-21
 

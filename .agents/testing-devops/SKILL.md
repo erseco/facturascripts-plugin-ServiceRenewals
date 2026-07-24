@@ -14,6 +14,14 @@ description: Tests, Docker, Makefile y CI de ServiceRenewals.
   datos. Los de integración crean sus propios fixtures (`Cliente`,
   `Producto`) con `uniqid()` y los borran en `tearDown()` **en orden
   inverso de creación** (claves foráneas).
+- Fixtures de venta: usar el trait `ServiceRenewalsFixtures`
+  (`makeCustomer` / `makeServiceProduct`). Requisitos para poder
+  **facturar** en CI (mismo criterio que AiScan):
+  1. `Producto.nostock = true` (servicios; si no, con stock 0 y
+     `ventasinstock=false` falla `BusinessDocumentGenerator`).
+  2. `Cliente.codpago` y `Cliente.codserie` rellenados (entornos bare-bones).
+  3. Empresa, almacén, serie, forma de pago e impuestos sembrados por
+     `Test/install-plugins.php` / instalación desatendida.
 - Tests que crean documentos: comprobar antes
   `Empresas::default()->idempresa` y hacer `markTestSkipped` si la
   instalación no tiene datos básicos.
