@@ -13,6 +13,9 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
   Sustituido por la API correcta del núcleo `Model::all([Where::eq(...)])`.
   El mismo fallo afectaba a `RenewalScanner::findDue()` (procesamiento del
   cron) y a `RenewalFlowTest`. Reportado por analarama.
+- Tests de flujo presupuesto → factura fallaban en CI con el aviso
+  «No hay suficiente stock»: los productos de servicio de prueba se crean
+  ahora con `nostock = true`.
 
 ## [1.0] - 2026-07-21
 

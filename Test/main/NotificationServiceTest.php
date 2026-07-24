@@ -214,6 +214,7 @@ final class NotificationServiceTest extends TestCase
         $product->referencia = 'SRV-' . substr(uniqid('', true), -8);
         $product->descripcion = 'Mail test product';
         $product->precio = 30.0;
+        $product->nostock = true;
         $this->assertTrue($product->save());
         $this->cleanup[] = $product;
 

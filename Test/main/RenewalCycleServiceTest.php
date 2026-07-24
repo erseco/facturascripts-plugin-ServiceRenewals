@@ -147,6 +147,7 @@ final class RenewalCycleServiceTest extends TestCase
         $product->referencia = 'SRV-' . substr(uniqid('', true), -8);
         $product->descripcion = 'Cycle test product';
         $product->precio = 10.0;
+        $product->nostock = true;
         $this->assertTrue($product->save());
         $this->cleanup[] = $product;
 

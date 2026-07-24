@@ -142,6 +142,7 @@ final class ControllerPermissionsTest extends TestCase
         $product->referencia = 'SRV-' . substr(uniqid('', true), -8);
         $product->descripcion = 'Perm test product';
         $product->precio = 15.0;
+        $product->nostock = true;
         $this->assertTrue($product->save());
         $this->cleanup[] = $product;
 

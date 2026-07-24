@@ -221,6 +221,9 @@ final class RenewalFlowTest extends TestCase
         $product->referencia = 'SRV-' . substr(uniqid('', true), -8);
         $product->descripcion = 'Flow test product';
         $product->precio = 40.0;
+        // los servicios no gestionan stock; sin esto, facturar el presupuesto falla
+        // en instalaciones con ventasinstock=false y stock a 0
+        $product->nostock = true;
         $this->assertTrue($product->save());
         $this->cleanup[] = $product;
 

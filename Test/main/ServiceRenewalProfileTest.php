@@ -149,6 +149,7 @@ final class ServiceRenewalProfileTest extends TestCase
         $product->referencia = 'SRV-' . substr(uniqid('', true), -8);
         $product->descripcion = 'Test renewal product';
         $product->precio = 50.0;
+        $product->nostock = true;
         $this->assertTrue($product->save(), 'Could not create the test product');
         $this->products[] = $product;
 
