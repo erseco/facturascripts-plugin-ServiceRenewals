@@ -4,6 +4,16 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 FacturaScripts requiere versiones enteras o con un solo decimal, por lo que
 la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
+## [Unreleased]
+
+### Fixed
+
+- Error al abrir la ficha de una suscripción (`EditServiceRenewal`): se
+  llamaba al método inexistente `allWhereEq()` al cargar las notificaciones.
+  Sustituido por la API correcta del núcleo `Model::all([Where::eq(...)])`.
+  El mismo fallo afectaba a `RenewalScanner::findDue()` (procesamiento del
+  cron) y a `RenewalFlowTest`. Reportado por analarama.
+
 ## [1.0] - 2026-07-21
 
 ### Added

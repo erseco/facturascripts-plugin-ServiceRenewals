@@ -75,7 +75,7 @@ final class RenewalFlowTest extends TestCase
         // dentro del umbral de 30 días
         $processor->process('2026-07-15');
 
-        $cycles = ServiceRenewalCycle::allWhereEq('service_renewal_id', $renewal->id);
+        $cycles = ServiceRenewalCycle::all([Where::eq('service_renewal_id', $renewal->id)]);
         $this->assertCount(1, $cycles);
         $this->registerCycleCleanup($cycles[0]);
         $this->assertNotEmpty($cycles[0]->quote_id, 'The quote must be generated');
@@ -83,7 +83,7 @@ final class RenewalFlowTest extends TestCase
         // segunda ejecución: sin duplicados
         $processor->process('2026-07-15');
 
-        $cycles = ServiceRenewalCycle::allWhereEq('service_renewal_id', $renewal->id);
+        $cycles = ServiceRenewalCycle::all([Where::eq('service_renewal_id', $renewal->id)]);
         $this->assertCount(1, $cycles, 'No duplicated cycles');
         $count = PresupuestoCliente::count([Where::eq('codcliente', $renewal->codcustomer)]);
         $this->assertSame(1, $count, 'No duplicated quotes');
