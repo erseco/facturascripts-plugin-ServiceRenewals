@@ -131,7 +131,6 @@
     "service-renewal-quote-generated": "Quote %code% generated successfully.",
     "service-renewal-quote-line": "Renewal of %identifier%",
     "service-renewal-quote-period": "Period: %start% - %end%",
-    "service-renewal-quote-provider": "Provider: %provider%",
     "service-renewal-renewal-failed": "Could not apply the renewal for cycle %id%.",
     "service-renewal-renewed": "Renewal applied: the expiration date has advanced.",
     "service-renewal-status-active": "Active",

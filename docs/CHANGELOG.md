@@ -17,6 +17,12 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ### Changed
 
+- La línea del presupuesto de renovación ya no incluye el proveedor: se
+  queda solo con el identificador del servicio y el periodo cubierto, que es
+  lo que describe qué se renueva. El proveedor sigue disponible en la ficha
+  de la suscripción, en el listado, en los filtros y en los avisos por email.
+  Se elimina la clave de traducción `service-renewal-quote-provider`, que
+  queda sin uso.
 - Las columnas de presupuesto y factura de los listados dejan el valor a
   `null` cuando no hay documento (el núcleo ya muestra el guion), de forma
   que solo se enlazan las filas con documento real.

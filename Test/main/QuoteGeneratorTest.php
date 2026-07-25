@@ -74,9 +74,11 @@ final class QuoteGeneratorTest extends TestCase
         $this->assertSame($renewal->getProduct()->referencia, $lines[0]->referencia);
         $this->assertEqualsWithDelta(25.0, $lines[0]->pvpunitario, 0.001, 'Must use the product price');
 
-        // la descripción incluye identificador y periodo
+        // la descripción incluye identificador y periodo, y nada más: el proveedor
+        // se queda en la ficha de la suscripción, fuera del presupuesto
         $this->assertStringContainsString($renewal->service_identifier, $lines[0]->descripcion);
         $this->assertStringContainsString('15-09-2026', $lines[0]->descripcion);
+        $this->assertStringNotContainsString('Test Provider', $lines[0]->descripcion);
 
         // el ciclo queda vinculado y en estado quote_created
         $cycle->reload();
