@@ -170,6 +170,48 @@ final class RenewalFlowTest extends TestCase
         $this->assertNull(DocumentTransformationFinder::findInvoiceForQuote((int)$cycle->quote_id));
     }
 
+    public function testRenewalExposesTheGeneratedQuote(): void
+    {
+        $renewal = $this->makeRenewal('2026-08-01', 12, false);
+        $this->assertNull($renewal->getLastQuote(), 'Without cycles there is no quote to open');
+
+        $processor = new RenewalProcessor();
+        $processor->process('2026-07-15');
+
+        $cycle = ServiceRenewalCycle::findWhere([Where::eq('service_renewal_id', $renewal->id)]);
+        $this->assertNotNull($cycle);
+        $this->registerCycleCleanup($cycle);
+
+        $quote = $renewal->getLastQuote();
+        $this->assertNotNull($quote, 'The subscription must expose the quote of the open cycle');
+        $this->assertSame((int)$cycle->quote_id, (int)$quote->idpresupuesto);
+        $this->assertSame('EditPresupuestoCliente?code=' . $quote->idpresupuesto, $quote->url());
+    }
+
+    public function testQuoteRemainsAccessibleAfterRenewal(): void
+    {
+        $renewal = $this->makeRenewal('2026-08-01', 12, false);
+        $processor = new RenewalProcessor();
+        $processor->process('2026-07-15');
+
+        $cycle = ServiceRenewalCycle::findWhere([Where::eq('service_renewal_id', $renewal->id)]);
+        $this->assertNotNull($cycle);
+        $this->registerCycleCleanup($cycle);
+        $quoteId = (int)$cycle->quote_id;
+
+        // al renovar, el ciclo se cierra y deja de ser el ciclo abierto
+        $this->transformQuoteToInvoice($cycle);
+        $processor->process('2026-07-16');
+        $cycle->reload();
+        $renewal->reload();
+        $this->assertSame(ServiceRenewalCycle::STATUS_RENEWED, $cycle->status);
+        $this->assertNull($renewal->getOpenCycle(), 'The renewed cycle is no longer open');
+
+        $quote = $renewal->getLastQuote();
+        $this->assertNotNull($quote, 'The quote of the last cycle must still be reachable');
+        $this->assertSame($quoteId, (int)$quote->idpresupuesto);
+    }
+
     /** Transforma el presupuesto del ciclo en factura usando el generador del núcleo. */
     private function transformQuoteToInvoice(ServiceRenewalCycle $cycle): void
     {

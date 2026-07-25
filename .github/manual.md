@@ -135,6 +135,10 @@ El presupuesto es un documento normal de FacturaScripts: puedes editarlo,
 añadir líneas o descuentos antes de enviarlo o facturarlo. Cada ciclo genera
 como máximo un presupuesto, aunque el cron se ejecute muchas veces.
 
+Para abrirlo, usa el botón **Ver presupuesto** de la ficha de la suscripción:
+lleva al presupuesto del ciclo abierto y, si la renovación ya se aplicó, al
+del último ciclo que generó uno. El botón solo aparece cuando existe.
+
 ## 12. Envío de avisos
 
 Si el envío automático está activo, el presupuesto se envía en PDF al email
@@ -200,6 +204,11 @@ Cada suscripción conserva su historial completo en las pestañas **Ciclos**
 (cada renovación con su presupuesto, su factura y su fecha de avance) y
 **Notificaciones** (cada email con su estado y sus errores). Nada se
 sobrescribe al renovar.
+
+En la pestaña **Ciclos**, los códigos de presupuesto y de factura son
+enlaces: al pulsarlos se abre el documento en FacturaScripts. El listado de
+renovaciones enlaza igual las columnas «Último presupuesto» y «Última
+factura».
 
 ## 20. Solución de problemas
 

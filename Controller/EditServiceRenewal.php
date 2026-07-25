@@ -180,15 +180,21 @@ class EditServiceRenewal extends EditController
         $mainViewName = $this->getMainViewName();
 
         switch ($viewName) {
+            case $mainViewName:
+                parent::loadData($viewName, $view);
+                $this->addQuoteLinkButton($mainViewName, $view->model);
+                break;
+
             case 'ListServiceRenewalCycle':
                 $id = $this->getViewModelValue($mainViewName, 'id');
                 $view->loadData('', [Where::eq('service_renewal_id', $id)], ['previous_expiration_date' => 'DESC']);
                 foreach ($view->cursor as $cycle) {
                     $cycle->status_label = Tools::lang()->trans('service-renewal-cycle-status-' . $cycle->status);
+                    // sin código: dejamos null para que la columna no genere un enlace roto
                     $quote = $cycle->getQuote();
-                    $cycle->quote_code = null !== $quote ? (string)$quote->codigo : '-';
+                    $cycle->quote_code = null !== $quote ? (string)$quote->codigo : null;
                     $invoice = $cycle->getInvoice();
-                    $cycle->invoice_code = null !== $invoice ? (string)$invoice->codigo : '-';
+                    $cycle->invoice_code = null !== $invoice ? (string)$invoice->codigo : null;
                 }
                 break;
 
@@ -213,6 +219,28 @@ class EditServiceRenewal extends EditController
             default:
                 parent::loadData($viewName, $view);
         }
+    }
+
+    /**
+     * Añade el botón de acceso al presupuesto de renovación, si existe.
+     *
+     * @param string         $viewName Nombre de la vista principal.
+     * @param ServiceRenewal $renewal  Suscripción cargada en la vista.
+     */
+    private function addQuoteLinkButton(string $viewName, ServiceRenewal $renewal): void
+    {
+        $quote = $renewal->getLastQuote();
+        if (null === $quote) {
+            return;
+        }
+
+        $this->addButton($viewName, [
+            'type' => 'link',
+            'action' => $quote->url(),
+            'color' => 'secondary',
+            'icon' => 'fa-solid fa-file-invoice-dollar',
+            'label' => 'view-estimation',
+        ]);
     }
 
     /** Cambia el estado de la suscripción. */

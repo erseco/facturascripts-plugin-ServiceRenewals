@@ -6,6 +6,21 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ## [Unreleased]
 
+### Added
+
+- Acceso al presupuesto desde la ficha de la suscripción: botón «Ver
+  presupuesto» en la pestaña principal, que abre el presupuesto del ciclo
+  abierto o, si ya se renovó, el del último ciclo que generó uno. Nuevo
+  método `ServiceRenewal::getLastQuote()`.
+- Columnas de presupuesto y factura enlazadas al documento del núcleo en la
+  pestaña **Ciclos** de la suscripción y en el listado de renovaciones.
+
+### Changed
+
+- Las columnas de presupuesto y factura de los listados dejan el valor a
+  `null` cuando no hay documento (el núcleo ya muestra el guion), de forma
+  que solo se enlazan las filas con documento real.
+
 ### Fixed
 
 - Error al abrir la ficha de una suscripción (`EditServiceRenewal`): se

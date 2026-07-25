@@ -39,10 +39,10 @@
             <widget type="text" fieldname="cycle_status"/>
         </column>
         <column name="last-quote" order="110">
-            <widget type="text" fieldname="last_quote_code"/>
+            <widget type="text" fieldname="last_quote_code" fieldclick="last_quote_id" onclick="EditPresupuestoCliente"/>
         </column>
         <column name="last-invoice" order="120">
-            <widget type="text" fieldname="last_invoice_code"/>
+            <widget type="text" fieldname="last_invoice_code" fieldclick="last_invoice_id" onclick="EditFacturaCliente"/>
         </column>
         <column name="amount" order="130" display="right">
             <widget type="money" fieldname="amount"/>
