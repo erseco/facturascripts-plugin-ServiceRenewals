@@ -26,6 +26,7 @@ use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Validator;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\Cliente;
+use FacturaScripts\Dinamic\Model\PresupuestoCliente;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\ReminderDayList;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalDateCalculator;
@@ -279,6 +280,33 @@ class ServiceRenewal extends ModelClass
             [Where::eq('service_renewal_id', $this->id)],
             ['previous_expiration_date' => 'DESC']
         );
+    }
+
+    /**
+     * Presupuesto de renovación más reciente de la suscripción.
+     *
+     * Prevalece el del ciclo abierto; si ninguno abierto tiene presupuesto,
+     * se devuelve el del último ciclo que llegó a generarlo. Permite acceder
+     * al presupuesto desde la ficha de la suscripción.
+     */
+    public function getLastQuote(): ?PresupuestoCliente
+    {
+        if (empty($this->id)) {
+            return null;
+        }
+
+        $cycle = $this->getOpenCycle();
+        $quote = null !== $cycle ? $cycle->getQuote() : null;
+        if (null !== $quote) {
+            return $quote;
+        }
+
+        $lastCycle = ServiceRenewalCycle::findWhere(
+            [Where::eq('service_renewal_id', $this->id), Where::isNotNull('quote_id')],
+            ['previous_expiration_date' => 'DESC']
+        );
+
+        return null !== $lastCycle ? $lastCycle->getQuote() : null;
     }
 
     /** Ciclo abierto (ni renovado, ni fallido, ni cancelado) más reciente, si existe. */

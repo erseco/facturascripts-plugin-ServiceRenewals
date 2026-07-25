@@ -34,7 +34,8 @@ convierte en factura, avanza la fecha de vencimiento automáticamente.
 - Recordatorios configurables (por ejemplo 15, 7 y 3 días antes).
 - Detección automática de la transformación del presupuesto en factura.
 - Renovación automática al facturar, o con confirmación manual.
-- Historial completo de ciclos y notificaciones por suscripción.
+- Historial completo de ciclos y notificaciones por suscripción, con acceso
+  directo al presupuesto y a la factura de cada ciclo.
 - Panel de resumen y listado con filtros por cliente, producto, tipo,
   proveedor, estado y vencimiento.
 - Pestañas de renovaciones en las fichas de cliente y de producto.

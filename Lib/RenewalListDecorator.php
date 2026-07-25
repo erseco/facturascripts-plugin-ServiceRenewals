@@ -69,11 +69,15 @@ final class RenewalListDecorator
                 ? Tools::lang()->trans('service-renewal-cycle-status-' . $cycle->status)
                 : '-';
 
+            // los identificadores permiten enlazar el documento desde el listado;
+            // sin código dejamos null para no generar un enlace roto
             $quote = null !== $cycle ? $cycle->getQuote() : null;
-            $renewal->last_quote_code = null !== $quote ? (string)$quote->codigo : '-';
+            $renewal->last_quote_code = null !== $quote ? (string)$quote->codigo : null;
+            $renewal->last_quote_id = null !== $quote ? $quote->idpresupuesto : null;
 
             $invoice = null !== $cycle ? $cycle->getInvoice() : null;
-            $renewal->last_invoice_code = null !== $invoice ? (string)$invoice->codigo : '-';
+            $renewal->last_invoice_code = null !== $invoice ? (string)$invoice->codigo : null;
+            $renewal->last_invoice_id = null !== $invoice ? $invoice->idfactura : null;
 
             if (null !== $renewal->price_override) {
                 $renewal->amount = (float)$renewal->price_override;
