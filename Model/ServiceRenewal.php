@@ -26,6 +26,7 @@ use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Validator;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\Cliente;
+use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Dinamic\Model\PresupuestoCliente;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\ReminderDayList;
@@ -309,7 +310,58 @@ class ServiceRenewal extends ModelClass
         return null !== $lastCycle ? $lastCycle->getQuote() : null;
     }
 
-    /** Ciclo abierto (ni renovado, ni fallido, ni cancelado) más reciente, si existe. */
+    /**
+     * Factura de renovación más reciente de la suscripción.
+     *
+     * Espejo de getLastQuote(): prevalece la del ciclo abierto y, si ninguno
+     * abierto la tiene, se devuelve la del último ciclo que llegó a
+     * registrarla. Al renovar con la política «invoice» el ciclo pasa a
+     * «renewed» en la misma pasada del cron, así que sin este respaldo la
+     * factura dejaría de ser accesible justo después de renovar.
+     *
+     * Se usa resolveInvoice() para que la factura recién emitida aparezca sin
+     * esperar a que el cron la vincule al ciclo.
+     */
+    public function getLastInvoice(): ?FacturaCliente
+    {
+        if (empty($this->id)) {
+            return null;
+        }
+
+        $cycle = $this->getOpenCycle();
+        $invoice = null !== $cycle ? $cycle->resolveInvoice() : null;
+        if (null !== $invoice) {
+            return $invoice;
+        }
+
+        $lastCycle = ServiceRenewalCycle::findWhere(
+            [Where::eq('service_renewal_id', $this->id), Where::isNotNull('invoice_id')],
+            ['previous_expiration_date' => 'DESC']
+        );
+        if (null !== $lastCycle) {
+            return $lastCycle->getInvoice();
+        }
+
+        // ningún ciclo la tiene vinculada: puede estar recién emitida
+        $last = $this->getLastCycle();
+
+        return null !== $last ? $last->resolveInvoice() : null;
+    }
+
+    /** Último ciclo de la suscripción, sea cual sea su estado, si existe. */
+    public function getLastCycle(): ?ServiceRenewalCycle
+    {
+        if (empty($this->id)) {
+            return null;
+        }
+
+        return ServiceRenewalCycle::findWhere(
+            [Where::eq('service_renewal_id', $this->id)],
+            ['previous_expiration_date' => 'DESC']
+        );
+    }
+
+    /** Ciclo abierto (ni renovado ni cancelado) más reciente, si existe. */
     public function getOpenCycle(): ?ServiceRenewalCycle
     {
         return ServiceRenewalCycle::findWhere(

@@ -69,6 +69,15 @@
             </div>
         </div>
         <div class="col-6 col-md-4 col-xl">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="fs-3 fw-bold">{{ fsc.cards.invoicedPendingRenewal }}</div>
+                    <div class="text-muted small">{{ i18n.trans('invoiced-pending-renewal') }}</div>
+                    <div class="text-muted" style="font-size: .75rem;">{{ i18n.trans('invoiced-pending-renewal-help') }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl">
             <div class="card shadow-sm h-100 {{ fsc.cards.failedEmails > 0 ? 'border-danger' : '' }}">
                 <div class="card-body text-center">
                     <div class="fs-3 fw-bold {{ fsc.cards.failedEmails > 0 ? 'text-danger' : '' }}">{{ fsc.cards.failedEmails }}</div>
@@ -92,6 +101,8 @@
                         <th scope="col">{{ i18n.trans('provider-name') }}</th>
                         <th scope="col">{{ i18n.trans('expiration-date') }}</th>
                         <th scope="col" class="text-end">{{ i18n.trans('days-left') }}</th>
+                        <th scope="col">{{ i18n.trans('quote') }}</th>
+                        <th scope="col">{{ i18n.trans('invoice') }}</th>
                         <th scope="col">{{ i18n.trans('status') }}</th>
                     </tr>
                 </thead>
@@ -117,11 +128,23 @@
                                     <span class="badge text-bg-secondary">{{ i18n.trans('days-left-count', {'%days%': daysLeft}) }}</span>
                                 {% endif %}
                             </td>
+                            <td>
+                                {% if renewal.last_quote_id %}
+                                    <a href="EditPresupuestoCliente?code={{ renewal.last_quote_id }}">{{ renewal.last_quote_code }}</a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if renewal.last_invoice_id %}
+                                    {% set invoiceColor = {'paid': 'success', 'overdue': 'danger', 'issued': 'info'}[renewal.invoice_status]|default('secondary') %}
+                                    <a href="EditFacturaCliente?code={{ renewal.last_invoice_id }}">{{ renewal.last_invoice_code }}</a>
+                                    <span class="badge text-bg-{{ invoiceColor }}">{{ renewal.invoice_status_label }}</span>
+                                {% endif %}
+                            </td>
                             <td>{{ i18n.trans('service-renewal-status-' ~ renewal.status) }}</td>
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">{{ i18n.trans('no-data') }}</td>
+                            <td colspan="9" class="text-center text-muted py-4">{{ i18n.trans('no-data') }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>

@@ -139,6 +139,9 @@ Para abrirlo, usa el botón **Ver presupuesto** de la ficha de la suscripción:
 lleva al presupuesto del ciclo abierto y, si la renovación ya se aplicó, al
 del último ciclo que generó uno. El botón solo aparece cuando existe.
 
+Junto a él aparece **Ver factura**, con el mismo criterio, en cuanto el
+plugin ha detectado la factura del ciclo.
+
 ## 12. Envío de avisos
 
 Si el envío automático está activo, el presupuesto se envía en PDF al email
@@ -155,6 +158,23 @@ Cuando el cliente acepta, transforma el presupuesto en factura desde
 FacturaScripts como siempre (aprobándolo directamente o pasando por pedido
 y albarán). El plugin detecta la transformación automáticamente en la
 siguiente pasada del cron, aunque haya documentos intermedios.
+
+Todo ocurre **en cuanto emites la factura**, sin esperar a nada: la factura
+aparece en la ficha, en el listado y en el panel, y la renovación se aplica
+sola si la política es «al facturar». No hace falta ejecutar el cron.
+
+El cron sigue haciendo la misma comprobación como red de seguridad, por si
+la factura llega por otro camino (una importación, la API, o un enlace que
+no llegó a registrarse). Si eso pasa, se detectará en la siguiente pasada.
+
+Junto al número de factura verás su estado de cobro:
+
+- **Emitida**: está hecha y aún no ha llegado su fecha de cobro.
+- **Vencida**: pasó la fecha de cobro y sigue sin pagarse.
+- **Pagada**: cobrada por completo.
+
+Sale de los recibos de la propia factura, así que se actualiza solo cuando
+registras el cobro en FacturaScripts.
 
 ## 14. Renovación automática al facturar
 
@@ -178,8 +198,18 @@ ficha de la suscripción: la fecha avanzará entonces, una sola vez.
 
 En **Ventas → Panel de renovaciones** tienes las tarjetas de resumen
 (activas, vencidas, vencen en 7 y 30 días, presupuestos pendientes,
-renovaciones por confirmar y emails fallidos) y la lista de próximos
-vencimientos.
+renovaciones por confirmar, **facturadas pendientes de renovar** y emails
+fallidos) y la lista de próximos vencimientos.
+
+La tarjeta **Facturadas pendientes de renovar** cuenta los ciclos con
+factura ya detectada cuya fecha de vencimiento todavía no ha avanzado, es
+decir, los que están en estado **Facturado** o **Pendiente de confirmar**.
+Con la política manual son los que esperan tu confirmación; con la política
+al facturar, los que se renovarán en la siguiente pasada del cron.
+
+La tabla de próximos vencimientos incluye el presupuesto y la factura del
+último ciclo: al pulsar el código se abre el documento. Si el ciclo todavía
+no tiene ese documento, la celda queda vacía.
 
 ## 17. Estados
 
@@ -198,6 +228,10 @@ servicio, proveedor, estado, rango de fechas de vencimiento, accesos rápidos
 (vencidos, próximos 7/30/60 días) y estado del ciclo actual (con o sin
 presupuesto, facturados, pendientes de renovar).
 
+El filtro **Facturados** incluye tanto las suscripciones cuyo ciclo vigente
+ya tiene factura como aquellas cuyo ciclo facturado se ha renovado y ha
+avanzado la fecha de vencimiento.
+
 ## 19. Historial
 
 Cada suscripción conserva su historial completo en las pestañas **Ciclos**
@@ -209,6 +243,11 @@ En la pestaña **Ciclos**, los códigos de presupuesto y de factura son
 enlaces: al pulsarlos se abre el documento en FacturaScripts. El listado de
 renovaciones enlaza igual las columnas «Último presupuesto» y «Última
 factura».
+
+Esas columnas siguen mostrando el documento después de renovar: cuando el
+ciclo pasa a **Renovado** deja de ser el ciclo abierto, pero el listado
+recurre entonces al último ciclo, de modo que el presupuesto y la factura
+no desaparecen de la pantalla.
 
 ## 20. Solución de problemas
 

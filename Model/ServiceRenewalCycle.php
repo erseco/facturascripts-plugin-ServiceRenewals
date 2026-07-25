@@ -25,6 +25,7 @@ use FacturaScripts\Core\Template\ModelTrait;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Dinamic\Model\PresupuestoCliente;
+use FacturaScripts\Plugins\ServiceRenewals\Lib\DocumentTransformationFinder;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalDateCalculator;
 
 /**
@@ -158,6 +159,32 @@ class ServiceRenewalCycle extends ModelClass
         $invoice = new FacturaCliente();
 
         return $invoice->load((string)$this->invoice_id) ? $invoice : null;
+    }
+
+    /**
+     * Factura del ciclo, aunque el cron todavía no la haya vinculado.
+     *
+     * `invoice_id` solo se rellena cuando pasa el procesador, así que entre
+     * emitir la factura y la siguiente pasada del cron el ciclo no sabe que
+     * existe. Para las pantallas eso es un hueco molesto: la buscamos por la
+     * transformación del presupuesto para poder mostrarla desde el minuto
+     * uno. No persiste nada; de vincularla se sigue encargando el cron.
+     */
+    public function resolveInvoice(): ?FacturaCliente
+    {
+        $invoice = $this->getInvoice();
+        if (null !== $invoice || empty($this->quote_id)) {
+            return $invoice;
+        }
+
+        $invoiceId = DocumentTransformationFinder::findInvoiceForQuote((int)$this->quote_id);
+        if (null === $invoiceId) {
+            return null;
+        }
+
+        $found = new FacturaCliente();
+
+        return $found->load((string)$invoiceId) ? $found : null;
     }
 
     public function install(): string

@@ -9,7 +9,7 @@
             <column name="product" display="none" order="0">
                 <widget type="text" fieldname="idproduct" readonly="true"/>
             </column>
-            <column name="enabled" numcolumns="3" order="100">
+            <column name="enabled" numcolumns="3" order="100" description="help-profile-enabled">
                 <widget type="checkbox" fieldname="enabled"/>
             </column>
             <column name="service-type" numcolumns="3" order="110">
@@ -25,22 +25,22 @@
                     <values title="service-type-other">other</values>
                 </widget>
             </column>
-            <column name="default-period-months" numcolumns="3" order="120">
+            <column name="default-period-months" numcolumns="3" order="120" description="help-default-period-months">
                 <widget type="number" fieldname="default_period_months" decimal="0" min="1" step="1" required="true"/>
             </column>
-            <column name="quote-lead-days" numcolumns="3" order="130">
+            <column name="quote-lead-days" numcolumns="3" order="130" description="help-profile-quote-lead-days">
                 <widget type="number" fieldname="quote_lead_days" decimal="0" min="0" step="1"/>
             </column>
-            <column name="reminder-days" numcolumns="3" order="140">
+            <column name="reminder-days" numcolumns="3" order="140" description="help-profile-reminder-days">
                 <widget type="text" fieldname="reminder_days" maxlength="100"/>
             </column>
-            <column name="auto-generate-quote" numcolumns="3" order="150">
+            <column name="auto-generate-quote" numcolumns="3" order="150" description="help-profile-auto-generate-quote">
                 <widget type="checkbox" fieldname="auto_generate_quote"/>
             </column>
-            <column name="auto-send-quote" numcolumns="3" order="160">
+            <column name="auto-send-quote" numcolumns="3" order="160" description="help-profile-auto-send-quote">
                 <widget type="checkbox" fieldname="auto_send_quote"/>
             </column>
-            <column name="renewal-trigger" numcolumns="3" order="170">
+            <column name="renewal-trigger" numcolumns="3" order="170" description="help-profile-renewal-trigger">
                 <widget type="select" fieldname="renewal_trigger" translate="true">
                     <values title="default"></values>
                     <values title="renewal-trigger-invoice">invoice</values>

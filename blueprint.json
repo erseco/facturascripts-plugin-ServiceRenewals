@@ -71,24 +71,28 @@
         "referencia": "DOM-COM",
         "descripcion": "Renovación de dominio .com",
         "precio": 14.95,
+        "nostock": true,
         "_unique": "referencia"
       },
       {
         "referencia": "HOST-ANUAL",
         "descripcion": "Hosting gestionado anual",
         "precio": 120.0,
+        "nostock": true,
         "_unique": "referencia"
       },
       {
         "referencia": "VPS-MENSUAL",
         "descripcion": "Servidor VPS mensual",
         "precio": 25.0,
+        "nostock": true,
         "_unique": "referencia"
       },
       {
         "referencia": "SSL-ANUAL",
         "descripcion": "Certificado SSL anual",
         "precio": 49.0,
+        "nostock": true,
         "_unique": "referencia"
       }
     ]

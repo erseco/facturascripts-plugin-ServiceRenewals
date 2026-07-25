@@ -25,11 +25,15 @@ use FacturaScripts\Core\DataSrc\Empresas;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Core\WorkQueue;
 use FacturaScripts\Dinamic\Lib\BusinessDocumentGenerator;
+use FacturaScripts\Dinamic\Model\DocTransformation;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Dinamic\Model\PresupuestoCliente;
+use FacturaScripts\Plugins\ServiceRenewals\Extension\Model\DocTransformation as DocTransformationExtension;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\DocumentTransformationFinder;
+use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleFilter;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleService;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalDateCalculator;
+use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalListDecorator;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalProcessor;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle;
@@ -56,6 +60,9 @@ final class RenewalFlowTest extends TestCase
         // registramos los workers igual que hace Init::init()
         WorkQueue::addWorker('ProcessServiceRenewalsWorker', 'ServiceRenewals.Process');
         WorkQueue::addWorker('SendServiceRenewalMailWorker', 'ServiceRenewals.SendNotification');
+
+        // y la extensión que renueva al enlazar el presupuesto con la factura
+        DocTransformation::addExtension(new DocTransformationExtension());
     }
 
     protected function tearDown(): void
@@ -210,6 +217,233 @@ final class RenewalFlowTest extends TestCase
         $quote = $renewal->getLastQuote();
         $this->assertNotNull($quote, 'The quote of the last cycle must still be reachable');
         $this->assertSame($quoteId, (int)$quote->idpresupuesto);
+    }
+
+    public function testRenewalExposesTheDetectedInvoice(): void
+    {
+        $renewal = $this->makeRenewal('2026-08-01', 12, true);
+        $this->assertNull($renewal->getLastInvoice(), 'Without cycles there is no invoice to open');
+
+        $processor = new RenewalProcessor();
+        $processor->process('2026-07-15');
+
+        $cycle = ServiceRenewalCycle::findWhere([Where::eq('service_renewal_id', $renewal->id)]);
+        $this->assertNotNull($cycle);
+        $this->registerCycleCleanup($cycle);
+
+        // con el presupuesto creado pero sin factura no hay nada que abrir
+        $this->assertNull($renewal->getLastInvoice(), 'Without an invoice there is nothing to open');
+
+        // al emitir la factura, la extensión la vincula y la deja pendiente de
+        // confirmar, sin esperar al cron ni saltarse la política manual
+        $this->transformQuoteToInvoice($cycle);
+        $cycle->reload();
+        $this->assertNotEmpty($cycle->invoice_id, 'The invoice is linked as soon as it is issued');
+        $this->assertSame(ServiceRenewalCycle::STATUS_RENEWAL_PENDING, $cycle->status);
+        $this->assertNotNull($cycle->resolveInvoice());
+
+        $invoice = $renewal->getLastInvoice();
+        $this->assertNotNull($invoice, 'The subscription must expose the invoice of the open cycle');
+        $this->assertSame((int)$cycle->invoice_id, (int)$invoice->idfactura);
+        $this->assertSame('EditFacturaCliente?code=' . $invoice->idfactura, $invoice->url());
+    }
+
+    public function testInvoiceRemainsAccessibleAfterRenewal(): void
+    {
+        $renewal = $this->makeRenewal('2026-08-01', 12, false);
+        $processor = new RenewalProcessor();
+        $processor->process('2026-07-15');
+
+        $cycle = ServiceRenewalCycle::findWhere([Where::eq('service_renewal_id', $renewal->id)]);
+        $this->assertNotNull($cycle);
+        $this->registerCycleCleanup($cycle);
+
+        // con política invoice el ciclo pasa a renewed en la misma pasada
+        $this->transformQuoteToInvoice($cycle);
+        $processor->process('2026-07-16');
+        $cycle->reload();
+        $renewal->reload();
+        $this->assertSame(ServiceRenewalCycle::STATUS_RENEWED, $cycle->status);
+        $this->assertNull($renewal->getOpenCycle(), 'The renewed cycle is no longer open');
+
+        $invoice = $renewal->getLastInvoice();
+        $this->assertNotNull($invoice, 'The invoice of the last cycle must still be reachable');
+        $this->assertSame((int)$cycle->invoice_id, (int)$invoice->idfactura);
+    }
+
+    public function testListKeepsDocumentsAfterRenewal(): void
+    {
+        $renewal = $this->makeRenewal('2026-08-01', 12, false);
+        $processor = new RenewalProcessor();
+        $processor->process('2026-07-15');
+
+        $cycle = ServiceRenewalCycle::findWhere([Where::eq('service_renewal_id', $renewal->id)]);
+        $this->assertNotNull($cycle);
+        $this->registerCycleCleanup($cycle);
+
+        $this->transformQuoteToInvoice($cycle);
+        $processor->process('2026-07-16');
+        $cycle->reload();
+        $renewal->reload();
+        $this->assertSame(ServiceRenewalCycle::STATUS_RENEWED, $cycle->status);
+
+        // regresión: el ciclo renovado ya no es el abierto y el listado se vaciaba
+        $rows = [$renewal];
+        RenewalListDecorator::decorateFull($rows, '2026-07-16');
+
+        $this->assertNotNull($rows[0]->last_quote_code, 'The quote column must survive the renewal');
+        $this->assertSame((int)$cycle->quote_id, (int)$rows[0]->last_quote_id);
+        $this->assertNotNull($rows[0]->last_invoice_code, 'The invoice column must survive the renewal');
+        $this->assertSame((int)$cycle->invoice_id, (int)$rows[0]->last_invoice_id);
+        $this->assertNotNull($rows[0]->cycle_status, 'The cycle status must survive the renewal');
+
+        // el estado de cobro alimenta el color de la fila
+        $this->assertSame('issued', $rows[0]->invoice_status, 'A fresh invoice is issued, not paid');
+        $this->assertNotEmpty($rows[0]->invoice_status_label);
+    }
+
+    public function testListShowsTheInvoiceBeforeTheCronLinksIt(): void
+    {
+        $renewal = $this->makeRenewal('2026-08-01', 12, true);
+        $processor = new RenewalProcessor();
+        $processor->process('2026-07-15');
+
+        $cycle = ServiceRenewalCycle::findWhere([Where::eq('service_renewal_id', $renewal->id)]);
+        $this->assertNotNull($cycle);
+        $this->registerCycleCleanup($cycle);
+
+        $rows = [$renewal];
+        RenewalListDecorator::decorateFull($rows, '2026-07-15');
+        $this->assertNull($rows[0]->last_invoice_code, 'Without an invoice the column stays empty');
+        $this->assertNull($rows[0]->invoice_status);
+
+        $this->transformQuoteToInvoice($cycle);
+
+        // simulamos que el vínculo no llegó a anotarse en el ciclo: pasa cuando la
+        // factura entra por otra vía (importación, API) y solo la recoge el cron.
+        // aun así el listado debe encontrarla siguiendo la cadena de documentos
+        $cycle->reload();
+        $cycle->invoice_id = null;
+        $cycle->invoice_detected_at = null;
+        $cycle->status = ServiceRenewalCycle::STATUS_QUOTE_CREATED;
+        $this->assertTrue($cycle->save());
+
+        $rows = [$renewal];
+        RenewalListDecorator::decorateFull($rows, '2026-07-15');
+        $this->assertNotNull($rows[0]->last_invoice_code, 'The issued invoice must show up right away');
+        $this->assertNotNull($rows[0]->last_invoice_id, 'And it must be linkable');
+        $this->assertSame('issued', $rows[0]->invoice_status);
+    }
+
+    public function testRenewsAsSoonAsTheInvoiceIsIssued(): void
+    {
+        $renewal = $this->makeRenewal('2026-08-01', 12, false);
+        $processor = new RenewalProcessor();
+        $processor->process('2026-07-15');
+
+        $cycle = ServiceRenewalCycle::findWhere([Where::eq('service_renewal_id', $renewal->id)]);
+        $this->assertNotNull($cycle);
+        $this->registerCycleCleanup($cycle);
+        $this->assertSame(ServiceRenewalCycle::STATUS_QUOTE_CREATED, $cycle->status);
+
+        // emitimos la factura y NO volvemos a llamar al procesador: la extensión
+        // del núcleo debe haber renovado ya al escribirse el vínculo
+        $this->transformQuoteToInvoice($cycle);
+
+        $cycle->reload();
+        $renewal->reload();
+        $this->assertSame(ServiceRenewalCycle::STATUS_RENEWED, $cycle->status, 'Renewed without waiting for the cron');
+        $this->assertNotEmpty($cycle->invoice_id);
+        $this->assertSame(
+            '2027-08-01',
+            RenewalDateCalculator::toIso($renewal->expiration_date),
+            'The expiration date advances right away'
+        );
+
+        // y el cron posterior no vuelve a avanzar la fecha
+        $processor->process('2026-07-17');
+        $renewal->reload();
+        $this->assertSame('2027-08-01', RenewalDateCalculator::toIso($renewal->expiration_date));
+    }
+
+    public function testManualPolicyStillWaitsWhenTheInvoiceIsIssued(): void
+    {
+        $renewal = $this->makeRenewal('2026-08-01', 12, true);
+        $processor = new RenewalProcessor();
+        $processor->process('2026-07-15');
+
+        $cycle = ServiceRenewalCycle::findWhere([Where::eq('service_renewal_id', $renewal->id)]);
+        $this->assertNotNull($cycle);
+        $this->registerCycleCleanup($cycle);
+
+        $this->transformQuoteToInvoice($cycle);
+
+        // la inmediatez no se salta la política: sigue esperando confirmación
+        $cycle->reload();
+        $renewal->reload();
+        $this->assertSame(ServiceRenewalCycle::STATUS_RENEWAL_PENDING, $cycle->status);
+        $this->assertSame(
+            '2026-08-01',
+            RenewalDateCalculator::toIso($renewal->expiration_date),
+            'The manual policy does not advance the date on its own'
+        );
+    }
+
+    public function testInvoiceStatusReflectsPayment(): void
+    {
+        $renewal = $this->makeRenewal('2026-08-01', 12, true);
+        $processor = new RenewalProcessor();
+        $processor->process('2026-07-15');
+
+        $cycle = ServiceRenewalCycle::findWhere([Where::eq('service_renewal_id', $renewal->id)]);
+        $this->assertNotNull($cycle);
+        $this->registerCycleCleanup($cycle);
+
+        $this->transformQuoteToInvoice($cycle);
+        $processor->process('2026-07-16');
+        $cycle->reload();
+
+        $invoice = $cycle->resolveInvoice();
+        $this->assertNotNull($invoice);
+
+        // el núcleo marca la factura como pagada al cobrar todos sus recibos
+        foreach ($invoice->getReceipts() as $receipt) {
+            $receipt->pagado = true;
+            $this->assertTrue($receipt->save());
+        }
+        $invoice->reload();
+        $this->assertTrue((bool)$invoice->pagada, 'The core marks the invoice as paid');
+
+        $rows = [$renewal];
+        RenewalListDecorator::decorateFull($rows, '2026-07-16');
+        $this->assertSame('paid', $rows[0]->invoice_status, 'A paid invoice colours the row as paid');
+    }
+
+    public function testInvoicedFilterFindsRenewedSubscriptions(): void
+    {
+        $renewal = $this->makeRenewal('2026-08-01', 12, false);
+        $processor = new RenewalProcessor();
+        $processor->process('2026-07-15');
+
+        $cycle = ServiceRenewalCycle::findWhere([Where::eq('service_renewal_id', $renewal->id)]);
+        $this->assertNotNull($cycle);
+        $this->registerCycleCleanup($cycle);
+
+        $this->transformQuoteToInvoice($cycle);
+        $processor->process('2026-07-16');
+        $cycle->reload();
+        $renewal->reload();
+        $this->assertSame(ServiceRenewalCycle::STATUS_RENEWED, $cycle->status);
+
+        // al renovar, expiration_date avanza y deja de coincidir con
+        // previous_expiration_date: el filtro debe seguir encontrando la suscripción
+        $found = false;
+        foreach (ServiceRenewal::all(RenewalCycleFilter::invoicedWhere(), [], 0, 0) as $row) {
+            if ((int)$row->id === (int)$renewal->id) {
+                $found = true;
+            }
+        }
+        $this->assertTrue($found, 'An already renewed invoiced subscription must match the filter');
     }
 
     /** Transforma el presupuesto del ciclo en factura usando el generador del núcleo. */

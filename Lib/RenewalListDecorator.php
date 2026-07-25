@@ -64,20 +64,27 @@ final class RenewalListDecorator
         foreach ($renewals as $renewal) {
             $renewal->product_reference = $renewal->getProduct()->referencia ?? '-';
 
-            $cycle = $renewal->getOpenCycle();
+            // con la política «invoice» el ciclo pasa a «renewed» en la misma pasada del
+            // cron que detecta la factura, y deja de ser el ciclo abierto: si solo
+            // miráramos ese, las columnas se vaciarían justo después de renovar
+            $cycle = $renewal->getOpenCycle() ?? $renewal->getLastCycle();
             $renewal->cycle_status = null !== $cycle
                 ? Tools::lang()->trans('service-renewal-cycle-status-' . $cycle->status)
-                : '-';
+                : null;
 
             // los identificadores permiten enlazar el documento desde el listado;
             // sin código dejamos null para no generar un enlace roto
-            $quote = null !== $cycle ? $cycle->getQuote() : null;
+            $quote = $renewal->getLastQuote();
             $renewal->last_quote_code = null !== $quote ? (string)$quote->codigo : null;
             $renewal->last_quote_id = null !== $quote ? $quote->idpresupuesto : null;
 
-            $invoice = null !== $cycle ? $cycle->getInvoice() : null;
+            $invoice = $renewal->getLastInvoice();
             $renewal->last_invoice_code = null !== $invoice ? (string)$invoice->codigo : null;
             $renewal->last_invoice_id = null !== $invoice ? $invoice->idfactura : null;
+            $renewal->invoice_status = self::invoiceStatus($invoice, $today);
+            $renewal->invoice_status_label = null !== $renewal->invoice_status
+                ? Tools::lang()->trans('invoice-' . $renewal->invoice_status)
+                : null;
 
             if (null !== $renewal->price_override) {
                 $renewal->amount = (float)$renewal->price_override;
@@ -86,5 +93,38 @@ final class RenewalListDecorator
                 $renewal->amount = (float)($product->precio ?? 0.0);
             }
         }
+    }
+
+    /**
+     * Estado de cobro de la factura: `paid`, `overdue` o `issued`.
+     *
+     * Devuelve null cuando todavía no hay factura, para que la fila no se
+     * coloree ni muestre etiqueta.
+     *
+     * No se usa el campo `vencida` del núcleo porque también marca como
+     * vencidas las facturas cuyo recibo vence hoy: con forma de pago al
+     * contado, una factura recién emitida saldría en rojo el mismo día. Aquí
+     * solo se considera vencida cuando la fecha de cobro ya ha pasado.
+     *
+     * @param FacturaCliente|null $invoice
+     */
+    private static function invoiceStatus($invoice, string $today): ?string
+    {
+        if (null === $invoice) {
+            return null;
+        }
+
+        if (!empty($invoice->pagada)) {
+            return 'paid';
+        }
+
+        foreach ($invoice->getReceipts() as $receipt) {
+            $due = RenewalDateCalculator::toIso($receipt->vencimiento);
+            if (empty($receipt->pagado) && null !== $due && $due < $today) {
+                return 'overdue';
+            }
+        }
+
+        return 'issued';
     }
 }

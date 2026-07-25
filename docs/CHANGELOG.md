@@ -8,6 +8,31 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ### Added
 
+- Acceso a la factura de renovación desde la ficha de la suscripción: botón
+  «Ver factura» junto a «Ver presupuesto», visible solo cuando la factura
+  existe. Nuevo método `ServiceRenewal::getLastInvoice()`, espejo de
+  `getLastQuote()`, y nueva clave de traducción `view-invoice` (el núcleo
+  solo trae `view-estimation`).
+- Textos de ayuda bajo los campos de la ficha de suscripción, del perfil de
+  producto y de la configuración general, mediante el atributo
+  `description` de las vistas. El de **fecha de vencimiento** avisa de que
+  es la próxima, no la del último cobro, y de que una fecha pasada genera
+  el presupuesto de inmediato.
+- La renovación se aplica **en cuanto se emite la factura**, sin esperar a
+  la siguiente pasada del cron. Nueva extensión del modelo `DocTransformation`
+  del núcleo: al escribirse el vínculo presupuesto → factura se ejecuta la
+  misma comprobación que hace el cron, sobre ese único ciclo
+  (`RenewalProcessor::detectAndRenew()`). Respeta la política de cada
+  suscripción, es idempotente y nunca interrumpe el guardado de la factura;
+  el cron sigue siendo la red de seguridad.
+- Estado de cobro de la factura en el listado y en el panel: **Emitida**,
+  **Pagada** o **Vencida**, con color de fila y etiqueta propia. Sale de los
+  campos `pagada` y `vencida` del núcleo.
+- Nueva tarjeta del panel **Facturadas pendientes de renovar**: ciclos en
+  estado `invoiced` o `renewal_pending`, es decir, aquellos con factura ya
+  detectada cuya fecha de vencimiento todavía no ha avanzado.
+- La tabla **Próximas renovaciones** del panel muestra el presupuesto y la
+  factura del último ciclo, enlazados al documento del núcleo.
 - Acceso al presupuesto desde la ficha de la suscripción: botón «Ver
   presupuesto» en la pestaña principal, que abre el presupuesto del ciclo
   abierto o, si ya se renovó, el del último ciclo que generó uno. Nuevo
@@ -29,6 +54,23 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ### Fixed
 
+- El listado de suscripciones se quedaba sin presupuesto, sin factura y sin
+  estado de ciclo justo después de renovar. Con la política `invoice`, el
+  procesador detecta la factura y aplica la renovación en la misma pasada,
+  dejando el ciclo en `renewed`; `RenewalListDecorator::decorateFull()` solo
+  miraba `getOpenCycle()`, que excluye ese estado, y se quedaba sin ciclo del
+  que leer los documentos. Ahora usa el ciclo abierto y, si no hay, el último.
+- Los productos de la demo (`blueprint.json`) se creaban con control de
+  stock, así que el presupuesto no llegaba a convertirse en factura: el
+  núcleo revertía el documento con «No hay suficiente stock». Como son
+  servicios, ahora se siembran con `nostock: true` y el flujo completo
+  funciona sin tocar nada.
+- El filtro **Facturados** del listado no encontraba las suscripciones ya
+  renovadas: la subconsulta emparejaba el ciclo por
+  `previous_expiration_date = expiration_date` y, al renovar, el vencimiento
+  avanza y deja de coincidir. Ahora acepta también el ciclo cuyo
+  `next_expiration_date` es el vencimiento actual, que es exactamente el que
+  acaba de renovar.
 - Error al abrir la ficha de una suscripción (`EditServiceRenewal`): se
   llamaba al método inexistente `allWhereEq()` al cargar las notificaciones.
   Sustituido por la API correcta del núcleo `Model::all([Where::eq(...)])`.

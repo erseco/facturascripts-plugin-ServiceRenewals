@@ -18,7 +18,7 @@
             <widget type="text" fieldname="quote_code" fieldclick="quote_id" onclick="EditPresupuestoCliente"/>
         </column>
         <column name="invoice" order="50">
-            <widget type="text" fieldname="invoice_code" fieldclick="invoice_id" onclick="EditFacturaCliente"/>
+            <widget type="text" fieldname="invoice_code" fieldclick="invoice_link_id" onclick="EditFacturaCliente"/>
         </column>
         <column name="quote-sent-at" order="60">
             <widget type="datetime" fieldname="quote_sent_at"/>

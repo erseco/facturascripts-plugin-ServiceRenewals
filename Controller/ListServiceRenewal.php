@@ -23,9 +23,9 @@ namespace FacturaScripts\Plugins\ServiceRenewals\Controller;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController\ListController;
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleFilter;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalListDecorator;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
-use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalProfile;
 
 /**
@@ -179,38 +179,14 @@ class ListServiceRenewal extends ListController
     }
 
     /**
-     * Opciones del filtro por estado del ciclo actual. Usa subconsultas
-     * correlacionadas con el vencimiento actual de cada suscripción.
+     * Opciones del filtro por estado del ciclo. Las condiciones viven en
+     * RenewalCycleFilter para poder probarlas fuera del controlador.
      *
      * @return array<int, array{label: string, where: DataBaseWhere[]}>
      */
     private function cycleFilterValues(): array
     {
-        $currentCycle = 'SELECT service_renewal_id FROM ' . ServiceRenewalCycle::tableName()
-            . ' WHERE previous_expiration_date = ' . ServiceRenewal::tableName() . '.expiration_date';
-
-        return [
-            [
-                'label' => '------',
-                'where' => [],
-            ],
-            [
-                'label' => Tools::lang()->trans('with-quote'),
-                'where' => [new DataBaseWhere('id', $currentCycle . ' AND quote_id IS NOT NULL', 'IN')],
-            ],
-            [
-                'label' => Tools::lang()->trans('without-quote'),
-                'where' => [new DataBaseWhere('id', $currentCycle . ' AND quote_id IS NOT NULL', 'NOT IN')],
-            ],
-            [
-                'label' => Tools::lang()->trans('invoiced'),
-                'where' => [new DataBaseWhere('id', $currentCycle . ' AND invoice_id IS NOT NULL', 'IN')],
-            ],
-            [
-                'label' => Tools::lang()->trans('renewal-pending'),
-                'where' => [new DataBaseWhere('id', $currentCycle . " AND status = 'renewal_pending'", 'IN')],
-            ],
-        ];
+        return RenewalCycleFilter::options();
     }
 
     /**
