@@ -131,7 +131,6 @@
     "service-renewal-quote-generated": "Presupuesto %code% generado correctamente.",
     "service-renewal-quote-line": "Renovación de %identifier%",
     "service-renewal-quote-period": "Periodo: %start% - %end%",
-    "service-renewal-quote-provider": "Proveedor: %provider%",
     "service-renewal-renewal-failed": "No se ha podido aplicar la renovación del ciclo %id%.",
     "service-renewal-renewed": "Renovación aplicada: la fecha de vencimiento ha avanzado.",
     "service-renewal-status-active": "Activa",

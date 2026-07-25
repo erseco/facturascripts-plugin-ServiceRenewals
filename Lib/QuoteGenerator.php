@@ -130,7 +130,7 @@ final class QuoteGenerator
     }
 
     /**
-     * Descripción de la línea: identificador, periodo cubierto y proveedor.
+     * Descripción de la línea: identificador y periodo cubierto.
      */
     private function buildLineDescription(ServiceRenewal $renewal, ServiceRenewalCycle $cycle): string
     {
@@ -145,11 +145,6 @@ final class QuoteGenerator
             '%start%' => Tools::date($start),
             '%end%' => Tools::date($end),
         ]);
-        if (!empty($renewal->provider_name)) {
-            $text .= "\n" . Tools::lang()->trans('service-renewal-quote-provider', [
-                '%provider%' => (string)$renewal->provider_name,
-            ]);
-        }
 
         return $text;
     }
