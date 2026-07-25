@@ -183,6 +183,7 @@ class EditServiceRenewal extends EditController
             case $mainViewName:
                 parent::loadData($viewName, $view);
                 $this->addQuoteLinkButton($mainViewName, $view->model);
+                $this->addInvoiceLinkButton($mainViewName, $view->model);
                 break;
 
             case 'ListServiceRenewalCycle':
@@ -193,8 +194,11 @@ class EditServiceRenewal extends EditController
                     // sin código: dejamos null para que la columna no genere un enlace roto
                     $quote = $cycle->getQuote();
                     $cycle->quote_code = null !== $quote ? (string)$quote->codigo : null;
-                    $invoice = $cycle->getInvoice();
+                    // resolveInvoice: la factura recién emitida aparece sin esperar al cron.
+                    // el enlace usa un campo aparte para no tocar invoice_id, que se persiste
+                    $invoice = $cycle->resolveInvoice();
                     $cycle->invoice_code = null !== $invoice ? (string)$invoice->codigo : null;
+                    $cycle->invoice_link_id = null !== $invoice ? $invoice->idfactura : null;
                 }
                 break;
 
@@ -240,6 +244,28 @@ class EditServiceRenewal extends EditController
             'color' => 'secondary',
             'icon' => 'fa-solid fa-file-invoice-dollar',
             'label' => 'view-estimation',
+        ]);
+    }
+
+    /**
+     * Añade el botón de acceso a la factura de renovación, si existe.
+     *
+     * @param string         $viewName Nombre de la vista principal.
+     * @param ServiceRenewal $renewal  Suscripción cargada en la vista.
+     */
+    private function addInvoiceLinkButton(string $viewName, ServiceRenewal $renewal): void
+    {
+        $invoice = $renewal->getLastInvoice();
+        if (null === $invoice) {
+            return;
+        }
+
+        $this->addButton($viewName, [
+            'type' => 'link',
+            'action' => $invoice->url(),
+            'color' => 'secondary',
+            'icon' => 'fa-solid fa-file-invoice',
+            'label' => 'view-invoice',
         ]);
     }
 

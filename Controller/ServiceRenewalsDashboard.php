@@ -22,6 +22,7 @@ namespace FacturaScripts\Plugins\ServiceRenewals\Controller;
 
 use FacturaScripts\Core\Template\Controller;
 use FacturaScripts\Core\Where;
+use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalListDecorator;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalNotification;
@@ -92,6 +93,15 @@ class ServiceRenewalsDashboard extends Controller
             'pendingRenewals' => ServiceRenewalCycle::count([
                 Where::eq('status', ServiceRenewalCycle::STATUS_RENEWAL_PENDING),
             ]),
+            // ciclos con factura ya detectada que todavía no han avanzado la fecha:
+            // «invoiced» (detectada, pendiente de aplicar) y «renewal_pending»
+            // (detectada, esperando confirmación manual)
+            'invoicedPendingRenewal' => ServiceRenewalCycle::count([
+                Where::in('status', [
+                    ServiceRenewalCycle::STATUS_INVOICED,
+                    ServiceRenewalCycle::STATUS_RENEWAL_PENDING,
+                ]),
+            ]),
             'failedEmails' => ServiceRenewalNotification::count([
                 Where::eq('status', ServiceRenewalNotification::STATUS_FAILED),
             ]),
@@ -106,5 +116,9 @@ class ServiceRenewalsDashboard extends Controller
             0,
             10
         );
+
+        // reutilizamos el decorador del listado para exponer el presupuesto y la
+        // factura del último ciclo con sus identificadores
+        RenewalListDecorator::decorateFull($this->upcoming, $this->today);
     }
 }

@@ -32,12 +32,15 @@ convierte en factura, avanza la fecha de vencimiento automáticamente.
 - Envío del presupuesto en PDF por email, con reintentos y registro de
   errores.
 - Recordatorios configurables (por ejemplo 15, 7 y 3 días antes).
-- Detección automática de la transformación del presupuesto en factura.
+- Detección automática de la transformación del presupuesto en factura, en
+  la siguiente pasada del cron.
 - Renovación automática al facturar, o con confirmación manual.
 - Historial completo de ciclos y notificaciones por suscripción, con acceso
-  directo al presupuesto y a la factura de cada ciclo.
+  directo al presupuesto y a la factura de cada ciclo, también después de
+  renovar.
 - Panel de resumen y listado con filtros por cliente, producto, tipo,
-  proveedor, estado y vencimiento.
+  proveedor, estado y vencimiento; el panel cuenta las facturadas pendientes
+  de renovar y enlaza el presupuesto y la factura de cada suscripción.
 - Pestañas de renovaciones en las fichas de cliente y de producto.
 
 ![Panel de renovaciones](.github/screenshot-dashboard.png)

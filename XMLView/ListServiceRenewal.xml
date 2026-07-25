@@ -44,6 +44,9 @@
         <column name="last-invoice" order="120">
             <widget type="text" fieldname="last_invoice_code" fieldclick="last_invoice_id" onclick="EditFacturaCliente"/>
         </column>
+        <column name="invoice-status" order="125">
+            <widget type="text" fieldname="invoice_status_label"/>
+        </column>
         <column name="amount" order="130" display="right">
             <widget type="money" fieldname="amount"/>
         </column>
@@ -53,6 +56,9 @@
             <option color="warning" fieldname="status" title="suspended">suspended</option>
             <option color="dark" fieldname="status" title="cancelled">cancelled</option>
             <option color="danger" fieldname="status" title="expired">expired</option>
+            <option color="danger" fieldname="invoice_status" title="invoice-overdue">overdue</option>
+            <option color="success" fieldname="invoice_status" title="invoice-paid">paid</option>
+            <option color="info" fieldname="invoice_status" title="invoice-issued">issued</option>
         </row>
     </rows>
 </view>

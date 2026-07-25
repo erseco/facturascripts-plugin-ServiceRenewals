@@ -154,6 +154,33 @@ final class RenewalProcessor
     }
 
     /**
+     * Detecta la factura de un único ciclo y aplica su renovación.
+     *
+     * Misma lógica que usa el cron, expuesta para poder reaccionar en el acto
+     * cuando el núcleo enlaza el presupuesto con la factura, sin esperar a la
+     * siguiente pasada. Es idempotente: repetirla no vuelve a avanzar la
+     * fecha, porque applyRenewal() sale antes si el ciclo ya está renovado.
+     *
+     * @return array<string, int> contadores de lo aplicado
+     */
+    public function detectAndRenew(ServiceRenewalCycle $cycle): array
+    {
+        $stats = ['invoices_detected' => 0, 'renewals_applied' => 0, 'errors' => 0];
+
+        try {
+            $this->detectAndRenewCycle($cycle, $stats);
+        } catch (Throwable $exception) {
+            $stats['errors']++;
+            Tools::log()->error('service-renewal-process-error', [
+                '%id%' => (string)$cycle->service_renewal_id,
+                '%error%' => $exception->getMessage(),
+            ]);
+        }
+
+        return $stats;
+    }
+
+    /**
      * Detecta presupuestos transformados en factura y aplica la renovación
      * según la política efectiva de cada suscripción.
      */

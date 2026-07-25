@@ -48,6 +48,49 @@ final class DocumentTransformationFinder
         return self::findInvoice('PresupuestoCliente', $quoteId, self::MAX_DEPTH);
     }
 
+    /**
+     * Camino inverso: presupuesto del que procede la factura, o null si no
+     * viene de ninguno. Permite reaccionar al emitir la factura sin recorrer
+     * todos los ciclos abiertos buscando a cuál pertenece.
+     */
+    public static function findQuoteForInvoice(int $invoiceId): ?int
+    {
+        return self::findQuote('FacturaCliente', $invoiceId, self::MAX_DEPTH);
+    }
+
+    private static function findQuote(string $model, int $docId, int $depth): ?int
+    {
+        if ($depth < 1) {
+            return null;
+        }
+
+        $transformations = DocTransformation::all([
+            Where::eq('model2', $model),
+            Where::eq('iddoc2', $docId),
+        ]);
+
+        // primero buscamos un presupuesto directo
+        foreach ($transformations as $transformation) {
+            if ('PresupuestoCliente' === $transformation->model1 && !empty($transformation->iddoc1)) {
+                return (int)$transformation->iddoc1;
+            }
+        }
+
+        // después retrocedemos por los documentos intermedios (pedido, albarán)
+        foreach ($transformations as $transformation) {
+            if (empty($transformation->iddoc1) || $transformation->model1 === $model) {
+                continue;
+            }
+
+            $quoteId = self::findQuote((string)$transformation->model1, (int)$transformation->iddoc1, $depth - 1);
+            if (null !== $quoteId) {
+                return $quoteId;
+            }
+        }
+
+        return null;
+    }
+
     private static function findInvoice(string $model, int $docId, int $depth): ?int
     {
         if ($depth < 1) {

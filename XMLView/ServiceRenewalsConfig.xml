@@ -9,22 +9,22 @@
             <column name="name" display="none" order="0">
                 <widget type="text" fieldname="name" readonly="true" required="true"/>
             </column>
-            <column name="enabled" numcolumns="3" order="100">
+            <column name="enabled" numcolumns="3" order="100" description="help-config-enabled">
                 <widget type="checkbox" fieldname="enabled"/>
             </column>
-            <column name="default-quote-lead-days" numcolumns="3" order="110">
+            <column name="default-quote-lead-days" numcolumns="3" order="110" description="help-quote-lead-days">
                 <widget type="number" fieldname="default_quote_lead_days" decimal="0" min="0" step="1"/>
             </column>
-            <column name="default-reminder-days" numcolumns="3" order="120">
+            <column name="default-reminder-days" numcolumns="3" order="120" description="help-reminder-days">
                 <widget type="text" fieldname="default_reminder_days" maxlength="100"/>
             </column>
-            <column name="max-attempts" numcolumns="3" order="130">
+            <column name="max-attempts" numcolumns="3" order="130" description="help-max-attempts">
                 <widget type="number" fieldname="max_attempts" decimal="0" min="1" max="10" step="1"/>
             </column>
-            <column name="default-auto-send-quote" numcolumns="4" order="140">
+            <column name="default-auto-send-quote" numcolumns="4" order="140" description="help-config-auto-send-quote">
                 <widget type="checkbox" fieldname="default_auto_send_quote"/>
             </column>
-            <column name="default-renewal-trigger" numcolumns="4" order="150">
+            <column name="default-renewal-trigger" numcolumns="4" order="150" description="help-renewal-trigger">
                 <widget type="select" fieldname="default_renewal_trigger" translate="true">
                     <values title="renewal-trigger-invoice">invoice</values>
                     <values title="renewal-trigger-manual">manual</values>
@@ -44,7 +44,7 @@
             <column name="quote-email-subject" numcolumns="12" order="200">
                 <widget type="text" fieldname="quote_email_subject" maxlength="255"/>
             </column>
-            <column name="quote-email-body" numcolumns="12" order="210">
+            <column name="quote-email-body" numcolumns="12" order="210" description="help-email-placeholders">
                 <widget type="textarea" fieldname="quote_email_body" rows="6"/>
             </column>
         </group>
@@ -52,7 +52,7 @@
             <column name="reminder-email-subject" numcolumns="12" order="300">
                 <widget type="text" fieldname="reminder_email_subject" maxlength="255"/>
             </column>
-            <column name="reminder-email-body" numcolumns="12" order="310">
+            <column name="reminder-email-body" numcolumns="12" order="310" description="help-email-placeholders">
                 <widget type="textarea" fieldname="reminder_email_body" rows="6"/>
             </column>
         </group>

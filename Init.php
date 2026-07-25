@@ -51,6 +51,10 @@ class Init extends InitClass
         // pestañas de renovaciones en las fichas de cliente y producto
         $this->loadExtension(new Extension\Controller\EditCliente());
         $this->loadExtension(new Extension\Controller\EditProducto());
+
+        // renovación en el acto al enlazar el presupuesto con la factura,
+        // sin esperar a la siguiente pasada del cron
+        $this->loadExtension(new Extension\Model\DocTransformation());
     }
 
     public function update(): void
