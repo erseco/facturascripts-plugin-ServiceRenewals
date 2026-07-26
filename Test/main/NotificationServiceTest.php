@@ -26,8 +26,10 @@ use FacturaScripts\Core\Model\WorkEvent;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Core\WorkQueue;
+use FacturaScripts\Dinamic\Model\PresupuestoCliente;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\NotificationService;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\QuoteGenerator;
+use FacturaScripts\Plugins\ServiceRenewals\Lib\QuoteNotificationSender;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleService;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalNotification;
@@ -83,6 +85,35 @@ final class NotificationServiceTest extends TestCase
         $this->assertStringNotContainsString('{{', (string)$notification->subject, 'No placeholder may survive');
     }
 
+    public function testCreatingTheNotificationDoesNotBuildThePdf(): void
+    {
+        [$renewal, $cycle, $quote] = $this->makeQuoteScenario('billing@example.com');
+
+        $service = new NotificationService();
+        $notification = $service->createQuoteNotification($renewal, $cycle, $quote);
+        $this->assertNotNull($notification);
+        $this->cleanup[] = $notification;
+
+        // exportar el PDF es lo más caro del flujo y no debe ocurrir en la petición:
+        // bloquea la interfaz mientras dura, y en el Playground congela la pestaña
+        $this->assertSame([], $notification->getAttachments(), 'The click must not export the PDF');
+
+        // y lo construye el worker justo antes de enviar. El motor de PDF depende
+        // del autoloader del núcleo, que no siempre está completo en CI: si no
+        // está disponible, basta con haber comprobado lo anterior
+        if (false === class_exists('Cezpdf')) {
+            return;
+        }
+
+        $this->assertTrue($service->attachQuotePdf($notification, $quote));
+        $attachments = $notification->getAttachments();
+        $this->assertCount(1, $attachments, 'The worker attaches the quote before sending');
+
+        $path = $notification->getFilesFolder() . DIRECTORY_SEPARATOR . $attachments[0]['file'];
+        $this->assertFileExists($path);
+        $this->assertGreaterThan(0, filesize($path), 'The generated PDF must not be empty');
+    }
+
     public function testEmailOverrideTakesPriority(): void
     {
         [$renewal, $cycle, $quote] = $this->makeQuoteScenario('billing@example.com');
@@ -111,6 +142,54 @@ final class NotificationServiceTest extends TestCase
 
         $count = ServiceRenewalNotification::count([Where::eq('cycle_id', $cycle->id)]);
         $this->assertSame(1, $count);
+    }
+
+    public function testSendingTheNoticeReusesTheExistingQuote(): void
+    {
+        [$renewal, $cycle, $quote] = $this->makeQuoteScenario('billing@example.com');
+        $quotesBefore = PresupuestoCliente::count([Where::eq('codcliente', $renewal->codcustomer)]);
+
+        $sender = new QuoteNotificationSender();
+        for ($press = 1; $press <= 3; $press++) {
+            $this->assertTrue($sender->send($renewal), "Press $press must queue the notice");
+        }
+
+        // ni un presupuesto nuevo por pulsar el botón varias veces
+        $this->assertSame(
+            $quotesBefore,
+            PresupuestoCliente::count([Where::eq('codcliente', $renewal->codcustomer)]),
+            'Sending the notice must never create another quote'
+        );
+        $cycle->reload();
+        $this->assertSame((int)$quote->idpresupuesto, (int)$cycle->quote_id, 'The cycle keeps its quote');
+
+        // y un único aviso archivado, reutilizado en cada reenvío
+        $notifications = ServiceRenewalNotification::all([Where::eq('cycle_id', $cycle->id)], [], 0, 0);
+        $this->assertCount(1, $notifications, 'The notice is reused, not duplicated');
+        $this->cleanup[] = $notifications[0];
+    }
+
+    public function testSendingTheNoticeGeneratesTheQuoteWhenMissing(): void
+    {
+        if (empty(Almacenes::all())) {
+            $this->markTestSkipped('No warehouse available to create documents');
+        }
+
+        // ciclo abierto todavía sin presupuesto
+        [$renewal, $cycle] = $this->makeRenewalScenario('billing@example.com');
+        $this->assertEmpty($cycle->quote_id);
+
+        $this->assertTrue((new QuoteNotificationSender())->send($renewal));
+
+        $cycle->reload();
+        $this->assertNotEmpty($cycle->quote_id, 'The quote is generated so that there is something to send');
+        $quote = $cycle->getQuote();
+        $this->assertNotNull($quote);
+        $this->cleanup[] = $quote;
+
+        $notifications = ServiceRenewalNotification::all([Where::eq('cycle_id', $cycle->id)], [], 0, 0);
+        $this->assertCount(1, $notifications);
+        $this->cleanup[] = $notifications[0];
     }
 
     public function testReminderDeduplicationPerDayRule(): void
