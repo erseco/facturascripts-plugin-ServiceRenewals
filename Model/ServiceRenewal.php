@@ -302,12 +302,27 @@ class ServiceRenewal extends ModelClass
             return $quote;
         }
 
-        $lastCycle = ServiceRenewalCycle::findWhere(
+        $lastCycle = $this->getLastCycleWithQuote();
+
+        return null !== $lastCycle ? $lastCycle->getQuote() : null;
+    }
+
+    /**
+     * Último ciclo que llegó a generar presupuesto, si existe.
+     *
+     * Se expone además del presupuesto porque los avisos se archivan por
+     * ciclo: para reenviar el email hace falta saber a cuál pertenece.
+     */
+    public function getLastCycleWithQuote(): ?ServiceRenewalCycle
+    {
+        if (empty($this->id)) {
+            return null;
+        }
+
+        return ServiceRenewalCycle::findWhere(
             [Where::eq('service_renewal_id', $this->id), Where::isNotNull('quote_id')],
             ['previous_expiration_date' => 'DESC']
         );
-
-        return null !== $lastCycle ? $lastCycle->getQuote() : null;
     }
 
     /**

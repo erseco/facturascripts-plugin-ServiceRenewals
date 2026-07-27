@@ -152,6 +152,12 @@ Ningún aviso se envía dos veces. En la pestaña **Notificaciones** de la
 suscripción puedes ver cada envío con su estado, sus reintentos y su error
 si lo hubo, y reenviarlo con el botón «Enviar aviso».
 
+Ese botón **no crea presupuestos nuevos**: envía el que ya tiene el ciclo y,
+si la renovación ya se aplicó, reenvía el del último ciclo. Solo genera uno
+cuando el ciclo en curso todavía no lo tiene, para que haya algo que enviar.
+Para preparar la renovación del periodo siguiente usa **Generar
+presupuesto**, que sí abre un ciclo nuevo.
+
 ## 13. Conversión en factura
 
 Cuando el cliente acepta, transforma el presupuesto en factura desde

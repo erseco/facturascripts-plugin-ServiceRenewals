@@ -66,7 +66,10 @@ final class NotificationService
             return null;
         }
 
-        $this->attachQuotePdf($notification, $quote);
+        // el PDF no se genera aquí: lo construye el worker justo antes de enviar
+        // (ensureQuoteAttachment). Exportarlo es lo más caro de todo el flujo y,
+        // hecho durante la petición, deja la interfaz bloqueada mientras dura;
+        // en el Playground, que corre PHP en el navegador, congela la pestaña.
 
         if (empty($notification->recipient)) {
             $this->markFailed($notification, 'No valid recipient email');
@@ -159,10 +162,18 @@ final class NotificationService
 
     /**
      * Genera el PDF del presupuesto y lo guarda como adjunto de la notificación.
+     *
+     * Lo llama el worker antes de enviar, no la petición web: exportar el PDF
+     * es lo más caro del flujo.
      */
     public function attachQuotePdf(ServiceRenewalNotification $notification, PresupuestoCliente $quote): bool
     {
         try {
+            // la librería de PDF cachea aquí las métricas de las fuentes; si la
+            // carpeta no existe, fopen() devuelve false y el fwrite() siguiente
+            // lanza un TypeError que deja el aviso sin adjunto
+            Tools::folderCheckOrCreate(FS_FOLDER . '/MyFiles/Cache');
+
             $exporter = new ExportManager();
             $exporter->newDoc('PDF', (string)$quote->codigo);
             $exporter->addBusinessDocPage($quote);

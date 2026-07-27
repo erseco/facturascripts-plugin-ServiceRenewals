@@ -23,12 +23,11 @@ namespace FacturaScripts\Plugins\ServiceRenewals\Controller;
 use FacturaScripts\Core\Lib\ExtendedController\EditController;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
-use FacturaScripts\Plugins\ServiceRenewals\Lib\NotificationService;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\QuoteGenerator;
+use FacturaScripts\Plugins\ServiceRenewals\Lib\QuoteNotificationSender;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleService;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle;
-use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalNotification;
 
 /**
  * Ficha de una suscripción: edición, ciclos, notificaciones y acciones.
@@ -329,43 +328,9 @@ class EditServiceRenewal extends EditController
         Tools::log()->error('service-renewal-quote-error');
     }
 
-    /** Envía o reenvía el email del presupuesto del ciclo actual. */
+    /** Envía o reenvía el email del presupuesto de la suscripción. */
     private function sendQuoteEmailAction(ServiceRenewal $renewal): void
     {
-        $blocked = [ServiceRenewal::STATUS_CANCELLED, ServiceRenewal::STATUS_SUSPENDED];
-        if (in_array($renewal->status, $blocked, true)) {
-            Tools::log()->warning('service-renewal-cancelled-no-actions');
-            return;
-        }
-
-        $cycle = $renewal->getOpenCycle();
-        $quote = null !== $cycle ? $cycle->getQuote() : null;
-        if (null === $cycle || null === $quote) {
-            Tools::log()->warning('service-renewal-no-quote-to-send');
-            return;
-        }
-
-        $service = new NotificationService();
-        $notification = $service->createQuoteNotification($renewal, $cycle, $quote);
-        if (null === $notification) {
-            Tools::log()->error('service-renewal-notification-error');
-            return;
-        }
-
-        // reenvío: recuperamos una notificación ya enviada o fallida
-        if (ServiceRenewalNotification::STATUS_SENT === $notification->status) {
-            $notification->status = ServiceRenewalNotification::STATUS_PENDING;
-            $notification->attempts = 0;
-            $notification->sent_at = null;
-            $notification->save();
-        }
-        if (empty($notification->recipient)) {
-            Tools::log()->error('service-renewal-notification-error');
-            return;
-        }
-
-        if ($service->enqueue($notification)) {
-            Tools::log()->notice('service-renewal-notification-queued');
-        }
+        (new QuoteNotificationSender())->send($renewal);
     }
 }
