@@ -335,6 +335,68 @@ final class NotificationServiceTest extends TestCase
         $this->assertEmpty((string)$notification->last_error);
     }
 
+    public function testWorkerRegeneratesQuoteWhenAttachmentMetadataExistsButFileIsMissing(): void
+    {
+        if (false === class_exists('Cezpdf')) {
+            $this->markTestSkipped('PDF engine not available');
+        }
+
+        [$renewal, $cycle, $quote] = $this->makeQuoteScenario('billing@example.com');
+
+        $service = new NotificationService();
+        $notification = $service->createQuoteNotification($renewal, $cycle, $quote);
+        $this->assertNotNull($notification);
+        $this->cleanup[] = $notification;
+
+        $this->assertTrue($service->attachQuotePdf($notification, $quote));
+        $attachments = $notification->getAttachments();
+        $this->assertCount(1, $attachments);
+        $path = $notification->getFilesFolder() . DIRECTORY_SEPARATOR . $attachments[0]['file'];
+        $this->assertFileExists($path);
+
+        // el archivo desaparece del disco pero los metadatos siguen ahí: la
+        // combinación exacta que hacía salir el correo sin presupuesto
+        unlink($path);
+        $this->assertFileDoesNotExist($path);
+        $this->assertNotEmpty($notification->getAttachments());
+
+        $ensure = new ReflectionMethod(SendServiceRenewalMailWorker::class, 'ensureQuoteAttachment');
+        $ensure->invoke(new SendServiceRenewalMailWorker(), $notification);
+
+        $attachments = $notification->getAttachments();
+        $this->assertCount(1, $attachments, 'The PDF must be rebuilt from surviving metadata');
+        $path = $notification->getFilesFolder() . DIRECTORY_SEPARATOR . $attachments[0]['file'];
+        $this->assertFileExists($path);
+        $this->assertGreaterThan(0, filesize($path));
+    }
+
+    public function testManualResendDoesNotResetANotificationWithoutRecipient(): void
+    {
+        [$renewal, $cycle, $quote] = $this->makeQuoteScenario('');
+
+        $service = new NotificationService();
+        $notification = $service->createQuoteNotification($renewal, $cycle, $quote);
+        $this->assertNotNull($notification);
+        $this->cleanup[] = $notification;
+        $this->assertSame(ServiceRenewalNotification::STATUS_FAILED, $notification->status);
+        $this->assertEmpty($notification->recipient);
+
+        $this->assertFalse(
+            (new QuoteNotificationSender())->send($renewal),
+            'Nothing can be sent without a recipient'
+        );
+
+        // reiniciarla dejaría un aviso pending, sin error y sin evento en cola:
+        // peor que el propio fallo original, que al menos documentaba la causa
+        $notification->reload();
+        $this->assertSame(
+            ServiceRenewalNotification::STATUS_FAILED,
+            $notification->status,
+            'It must not be left pending without a recipient'
+        );
+        $this->assertNotEmpty((string)$notification->last_error, 'The failure reason must survive');
+    }
+
     public function testReminderDeduplicationPerDayRule(): void
     {
         [$renewal, $cycle] = $this->makeRenewalScenario('billing@example.com');

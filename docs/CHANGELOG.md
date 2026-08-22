@@ -8,6 +8,13 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ### Fixed
 
+- El worker valida ahora que el archivo adjunto exista de verdad, no solo sus
+  metadatos: si el PDF desaparece del disco se regenera antes de enviar, en
+  lugar de salir el correo sin presupuesto aparentando estar todo en orden.
+- «Enviar aviso» sobre un aviso fallido sin destinatario ya no lo deja a
+  medias (pending, sin error registrado y sin evento en cola): se vuelve a
+  resolver el email del cliente y, si sigue sin haber destinatario posible,
+  el aviso conserva su estado fallido y el motivo.
 - «Enviar aviso» ya no recurre al presupuesto de un ciclo anterior cuando la
   generación del presupuesto del ciclo abierto falla: el envío se aborta y el
   error queda registrado en el ciclo. Ante un fallo interno, mandar al cliente

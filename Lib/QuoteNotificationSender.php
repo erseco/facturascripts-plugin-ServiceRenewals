@@ -60,6 +60,22 @@ final class QuoteNotificationSender
             return false;
         }
 
+        // sin destinatario no se reinicia nada: un aviso pending y sin email
+        // quedaría atascado y además perdería el motivo del fallo. Se vuelve
+        // a resolver por si el email del cliente se ha corregido desde entonces
+        if (empty($notification->recipient)) {
+            $notification->recipient = $service->resolveRecipient($renewal);
+            if (empty($notification->recipient)) {
+                Tools::log()->error('service-renewal-notification-error');
+                return false;
+            }
+
+            if (false === $notification->save()) {
+                Tools::log()->error('service-renewal-notification-error');
+                return false;
+            }
+        }
+
         // reenvío: se reutiliza el aviso ya archivado, sin crear otro. Un
         // aviso fallido con los reintentos agotados también se reinicia,
         // porque el worker descartaría el evento sin enviar nada
@@ -71,11 +87,6 @@ final class QuoteNotificationSender
             $notification->sent_at = null;
             $notification->last_error = null;
             $notification->save();
-        }
-
-        if (empty($notification->recipient)) {
-            Tools::log()->error('service-renewal-notification-error');
-            return false;
         }
 
         if (false === $service->enqueue($notification)) {

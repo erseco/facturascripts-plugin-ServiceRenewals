@@ -123,12 +123,19 @@ class SendServiceRenewalMailWorker extends WorkerClass
         if (ServiceRenewalNotification::TYPE_QUOTE !== $notification->notification_type) {
             return;
         }
-        if (false === empty($notification->getAttachments())) {
-            return;
+
+        // los metadatos no bastan: si el archivo ya no está en disco, el
+        // correo saldría sin adjunto aunque todo lo demás parezca en orden
+        $folder = $notification->getFilesFolder();
+        foreach ($notification->getAttachments() as $attachment) {
+            if (is_file($folder . DIRECTORY_SEPARATOR . basename((string)$attachment['file']))) {
+                return;
+            }
         }
 
         // sin adjunto real el email saldría incompleto y aun así quedaría
         // marcado como enviado: mejor fallar aquí y dejarlo a los reintentos
+        $notification->setAttachments([]);
         $quote = $notification->getCycle()->getQuote();
         if (null === $quote) {
             throw new \RuntimeException('Quote not found for the notification PDF');
