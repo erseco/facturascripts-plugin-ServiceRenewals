@@ -123,14 +123,26 @@ class SendServiceRenewalMailWorker extends WorkerClass
         if (ServiceRenewalNotification::TYPE_QUOTE !== $notification->notification_type) {
             return;
         }
-        if (false === empty($notification->getAttachments())) {
-            return;
+
+        // los metadatos no bastan: si el archivo ya no está en disco, el
+        // correo saldría sin adjunto aunque todo lo demás parezca en orden
+        $folder = $notification->getFilesFolder();
+        foreach ($notification->getAttachments() as $attachment) {
+            if (is_file($folder . DIRECTORY_SEPARATOR . basename((string)$attachment['file']))) {
+                return;
+            }
         }
 
-        $cycle = $notification->getCycle();
-        $quote = $cycle->getQuote();
-        if (null !== $quote) {
-            (new NotificationService())->attachQuotePdf($notification, $quote);
+        // sin adjunto real el email saldría incompleto y aun así quedaría
+        // marcado como enviado: mejor fallar aquí y dejarlo a los reintentos
+        $notification->setAttachments([]);
+        $quote = $notification->getCycle()->getQuote();
+        if (null === $quote) {
+            throw new \RuntimeException('Quote not found for the notification PDF');
+        }
+
+        if (false === (new NotificationService())->attachQuotePdf($notification, $quote)) {
+            throw new \RuntimeException('Could not generate the quote PDF');
         }
     }
 
@@ -139,9 +151,12 @@ class SendServiceRenewalMailWorker extends WorkerClass
         $notification->status = ServiceRenewalNotification::STATUS_SENT;
         $notification->sent_at = Tools::dateTime();
         $notification->last_error = null;
-        $notification->save();
 
-        // eliminamos los adjuntos temporales tras el envío correcto
+        // el PDF se conserva hasta el envío correcto; tras él, se van archivos
+        // y metadatos, para que un reenvío regenere el adjunto desde cero
+        // (ensureQuoteAttachment solo lo reconstruye si no quedan metadatos)
+        $notification->setAttachments([]);
+        $notification->save();
         $notification->deleteFiles();
 
         // reflejamos el envío en el ciclo cuando es el email del presupuesto

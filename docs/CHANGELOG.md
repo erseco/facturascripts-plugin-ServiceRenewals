@@ -6,6 +6,56 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ## [Unreleased]
 
+### Fixed
+
+- La generación del presupuesto de un ciclo queda serializada: bloqueo de
+  fila (`FOR UPDATE`) y relectura de `quote_id` dentro de la transacción.
+  Sin ello, dos procesos en paralelo (cron y «Enviar aviso», doble clic,
+  peticiones simultáneas) podían crear cada uno su presupuesto para el mismo
+  ciclo, dejando uno huérfano; ahora el perdedor de la carrera reutiliza el
+  del ganador.
+- El worker valida ahora que el archivo adjunto exista de verdad, no solo sus
+  metadatos: si el PDF desaparece del disco se regenera antes de enviar, en
+  lugar de salir el correo sin presupuesto aparentando estar todo en orden.
+- «Enviar aviso» sobre un aviso fallido sin destinatario ya no lo deja a
+  medias (pending, sin error registrado y sin evento en cola): se vuelve a
+  resolver el email del cliente y, si sigue sin haber destinatario posible,
+  el aviso conserva su estado fallido y el motivo.
+- «Enviar aviso» ya no recurre al presupuesto de un ciclo anterior cuando la
+  generación del presupuesto del ciclo abierto falla: el envío se aborta y el
+  error queda registrado en el ciclo. Ante un fallo interno, mandar al cliente
+  el presupuesto del periodo pasado es peor que no mandar nada.
+- El worker ya no envía nunca un email de presupuesto sin adjunto: si falta el
+  presupuesto o la exportación del PDF falla, `ensureQuoteAttachment()` aborta
+  el envío con un error y la notificación queda como `failed` con reintentos,
+  en vez de salir incompleta y marcarse como enviada.
+- El PDF del presupuesto ya no se genera al pulsar **Enviar aviso**: lo
+  construye el worker justo antes de enviar el correo, que es donde ya estaba
+  previsto (`ensureQuoteAttachment`). Exportarlo es lo más caro del flujo y,
+  hecho durante la petición, deja la interfaz bloqueada mientras dura; en el
+  Playground, que ejecuta PHP en el navegador con WebAssembly, llega a
+  congelar la pestaña.
+- El adjunto del presupuesto se perdía en silencio cuando faltaba la carpeta
+  `MyFiles/Cache`: la librería de PDF cachea ahí las métricas de las fuentes,
+  `fopen()` devolvía `false` y el `fwrite()` siguiente lanzaba un `TypeError`
+  que el plugin capturaba, dejando el aviso sin PDF. Ahora se asegura la
+  carpeta antes de exportar. Reportado en la imagen base:
+  erseco/alpine-facturascripts#24.
+- `docker-compose.yml` publicaba `8080:8000`, pero el contenedor sirve en el
+  8080: `http://localhost:8080` no llevaba a ninguna parte.
+- El reenvío de un aviso ya enviado salía **sin el presupuesto adjunto**: al
+  marcar el envío como correcto se borraban los archivos adjuntos pero no sus
+  metadatos, así que `ensureQuoteAttachment()` consideraba que el PDF seguía
+  ahí y no lo regeneraba, y el bucle de envío lo omitía en silencio al no
+  existir el archivo. Ahora los metadatos se limpian junto con los archivos y
+  cada reenvío reconstruye el PDF desde cero.
+- El botón **Enviar aviso** de la ficha dejaba de funcionar en cuanto la
+  suscripción se renovaba: buscaba el presupuesto en el ciclo abierto y, al
+  pasar el ciclo a «renovado», avisaba de que no había nada que enviar. Ahora
+  reenvía el del último ciclo que llegó a generarlo. Es el mismo fallo de
+  `getOpenCycle()` que ya se corrigió en el listado, la ficha y el panel; esta
+  acción se había quedado fuera.
+
 ### Added
 
 - Acceso a la factura de renovación desde la ficha de la suscripción: botón
@@ -42,6 +92,14 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ### Changed
 
+- **Enviar aviso** reinicia también los avisos fallidos con los reintentos
+  agotados (estado, contador y último error): tal cual, el worker descartaba
+  el evento sin enviar nada y sin dejar rastro útil.
+- **Enviar aviso** genera el presupuesto cuando el ciclo abierto todavía no
+  tiene ninguno, en vez de limitarse a avisar de que no hay nada que enviar.
+  Nunca abre el ciclo del periodo siguiente: eso sigue siendo trabajo del
+  botón «Generar presupuesto». La lógica se mueve del controlador a
+  `Lib/QuoteNotificationSender` para poder probarla.
 - La línea del presupuesto de renovación ya no incluye el proveedor: se
   queda solo con el identificador del servicio y el periodo cubierto, que es
   lo que describe qué se renueva. El proveedor sigue disponible en la ficha

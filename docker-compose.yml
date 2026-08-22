@@ -24,7 +24,8 @@ services:
     image: erseco/alpine-facturascripts:main
     restart: unless-stopped
     ports:
-      - "8080:8000"
+      # el contenedor sirve en el 8080, igual que el docker-compose de la imagen
+      - "8080:8080"
     environment:
       DB_HOST: mariadb
       DB_NAME: facturascripts
