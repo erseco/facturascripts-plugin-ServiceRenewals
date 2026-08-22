@@ -127,10 +127,15 @@ class SendServiceRenewalMailWorker extends WorkerClass
             return;
         }
 
-        $cycle = $notification->getCycle();
-        $quote = $cycle->getQuote();
-        if (null !== $quote) {
-            (new NotificationService())->attachQuotePdf($notification, $quote);
+        // sin adjunto real el email saldría incompleto y aun así quedaría
+        // marcado como enviado: mejor fallar aquí y dejarlo a los reintentos
+        $quote = $notification->getCycle()->getQuote();
+        if (null === $quote) {
+            throw new \RuntimeException('Quote not found for the notification PDF');
+        }
+
+        if (false === (new NotificationService())->attachQuotePdf($notification, $quote)) {
+            throw new \RuntimeException('Could not generate the quote PDF');
         }
     }
 

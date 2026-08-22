@@ -8,6 +8,14 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ### Fixed
 
+- «Enviar aviso» ya no recurre al presupuesto de un ciclo anterior cuando la
+  generación del presupuesto del ciclo abierto falla: el envío se aborta y el
+  error queda registrado en el ciclo. Ante un fallo interno, mandar al cliente
+  el presupuesto del periodo pasado es peor que no mandar nada.
+- El worker ya no envía nunca un email de presupuesto sin adjunto: si falta el
+  presupuesto o la exportación del PDF falla, `ensureQuoteAttachment()` aborta
+  el envío con un error y la notificación queda como `failed` con reintentos,
+  en vez de salir incompleta y marcarse como enviada.
 - El PDF del presupuesto ya no se genera al pulsar **Enviar aviso**: lo
   construye el worker justo antes de enviar el correo, que es donde ya estaba
   previsto (`ensureQuoteAttachment`). Exportarlo es lo más caro del flujo y,
@@ -71,6 +79,9 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ### Changed
 
+- **Enviar aviso** reinicia también los avisos fallidos con los reintentos
+  agotados (estado, contador y último error): tal cual, el worker descartaba
+  el evento sin enviar nada y sin dejar rastro útil.
 - **Enviar aviso** genera el presupuesto cuando el ciclo abierto todavía no
   tiene ninguno, en vez de limitarse a avisar de que no hay nada que enviar.
   Nunca abre el ciclo del periodo siguiente: eso sigue siendo trabajo del

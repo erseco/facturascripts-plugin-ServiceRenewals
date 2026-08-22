@@ -31,11 +31,14 @@ use FacturaScripts\Plugins\ServiceRenewals\Lib\NotificationService;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\QuoteGenerator;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\QuoteNotificationSender;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleService;
+use FacturaScripts\Plugins\ServiceRenewals\Lib\ServiceRenewalsSettings;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
+use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalNotification;
 use FacturaScripts\Plugins\ServiceRenewals\Worker\SendServiceRenewalMailWorker;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
+use RuntimeException;
 
 /**
  * Tests de las notificaciones: persistencia, deduplicación y fallos de envío.
@@ -229,6 +232,107 @@ final class NotificationServiceTest extends TestCase
         $notifications = ServiceRenewalNotification::all([Where::eq('cycle_id', $cycle->id)], [], 0, 0);
         $this->assertCount(1, $notifications);
         $this->cleanup[] = $notifications[0];
+    }
+
+    public function testSendingNoticeDoesNotFallBackToPreviousQuoteWhenGenerationFails(): void
+    {
+        [$renewal, $oldCycle] = $this->makeRenewalScenario('billing@example.com');
+        $oldQuote = (new QuoteGenerator())->generate($renewal, $oldCycle);
+        $this->assertNotNull($oldQuote);
+        $this->cleanup[] = $oldQuote;
+
+        // ciclo nuevo abierto todavía sin presupuesto
+        $newCycle = new ServiceRenewalCycle();
+        $newCycle->service_renewal_id = $renewal->id;
+        $newCycle->previous_expiration_date = '2027-09-15';
+        $newCycle->next_expiration_date = '2028-09-15';
+        $this->assertTrue($newCycle->save());
+        $this->cleanup[] = $newCycle;
+
+        // generación imposible: el producto desapareció (solo en memoria,
+        // como cuando los datos quedan incoherentes en la base de datos)
+        $renewal->idproduct = 999999999;
+
+        $this->assertFalse(
+            (new QuoteNotificationSender())->send($renewal),
+            'A failed generation must abort the sending'
+        );
+
+        // y jamás un respaldo en el presupuesto del ciclo anterior: enviar al
+        // cliente el presupuesto del periodo pasado es peor que no enviar nada
+        $this->assertSame(
+            0,
+            ServiceRenewalNotification::count([Where::eq('cycle_id', $oldCycle->id)]),
+            'Must not fall back to the previous cycle quote'
+        );
+        $this->assertSame(0, ServiceRenewalNotification::count([Where::eq('cycle_id', $newCycle->id)]));
+    }
+
+    public function testWorkerFailsInsteadOfSendingQuoteWithoutPdf(): void
+    {
+        [$renewal, $cycle, $quote] = $this->makeQuoteScenario('billing@example.com');
+
+        $service = new NotificationService();
+        $notification = $service->createQuoteNotification($renewal, $cycle, $quote);
+        $this->assertNotNull($notification);
+        $this->cleanup[] = $notification;
+
+        // el presupuesto desaparece: no hay PDF posible, y enviar el email sin
+        // adjunto marcándolo como enviado es el fallo silencioso a impedir
+        $this->assertTrue($quote->delete());
+
+        // la guardia del adjunto aborta el envío de forma explícita (se invoca
+        // directa porque la capa de correo puede no estar operativa en tests)
+        $ensure = new ReflectionMethod(SendServiceRenewalMailWorker::class, 'ensureQuoteAttachment');
+        try {
+            $ensure->invoke(new SendServiceRenewalMailWorker(), $notification);
+            $this->fail('A quote notification without PDF must not be deliverable');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsStringIgnoringCase('PDF', $exception->getMessage());
+        }
+
+        // y pasada por el ciclo completo del worker queda como fallida, jamás enviada.
+        // El texto del error depende del transporte disponible: solo lo determinista
+        $event = new WorkEvent();
+        $event->name = 'ServiceRenewals.SendNotification';
+        $event->value = (string)$notification->id;
+        $event->setParams(['id' => $notification->id]);
+
+        $this->assertTrue((new SendServiceRenewalMailWorker())->run($event));
+
+        $notification->reload();
+        $this->assertSame(
+            ServiceRenewalNotification::STATUS_FAILED,
+            $notification->status,
+            'It must not be marked as sent'
+        );
+        $this->assertSame(1, (int)$notification->attempts);
+        $this->assertNotEmpty((string)$notification->last_error);
+        $this->assertSame([], $notification->getAttachments(), 'No attachment metadata may survive a failed delivery');
+    }
+
+    public function testManualResendResetsExhaustedFailedNotification(): void
+    {
+        [$renewal, $cycle, $quote] = $this->makeQuoteScenario('billing@example.com');
+
+        $service = new NotificationService();
+        $notification = $service->createQuoteNotification($renewal, $cycle, $quote);
+        $this->assertNotNull($notification);
+        $this->cleanup[] = $notification;
+
+        // reintentos agotados: tal cual, el worker descartaría el evento sin
+        // enviar nada; el reenvío manual debe devolverlo a la cola
+        $notification->status = ServiceRenewalNotification::STATUS_FAILED;
+        $notification->attempts = ServiceRenewalsSettings::maxAttempts();
+        $notification->last_error = 'SMTP timeout';
+        $this->assertTrue($notification->save());
+
+        $this->assertTrue((new QuoteNotificationSender())->send($renewal));
+
+        $notification->reload();
+        $this->assertSame(ServiceRenewalNotification::STATUS_PENDING, $notification->status);
+        $this->assertSame(0, (int)$notification->attempts);
+        $this->assertEmpty((string)$notification->last_error);
     }
 
     public function testReminderDeduplicationPerDayRule(): void

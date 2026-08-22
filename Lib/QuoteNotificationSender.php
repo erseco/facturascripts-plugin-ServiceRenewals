@@ -60,11 +60,16 @@ final class QuoteNotificationSender
             return false;
         }
 
-        // reenvío: se reutiliza el aviso ya archivado, sin crear otro
-        if (ServiceRenewalNotification::STATUS_SENT === $notification->status) {
+        // reenvío: se reutiliza el aviso ya archivado, sin crear otro. Un
+        // aviso fallido con los reintentos agotados también se reinicia,
+        // porque el worker descartaría el evento sin enviar nada
+        $resettable = ServiceRenewalNotification::STATUS_SENT === $notification->status
+            || ServiceRenewalNotification::STATUS_FAILED === $notification->status;
+        if ($resettable) {
             $notification->status = ServiceRenewalNotification::STATUS_PENDING;
             $notification->attempts = 0;
             $notification->sent_at = null;
+            $notification->last_error = null;
             $notification->save();
         }
 
@@ -86,8 +91,10 @@ final class QuoteNotificationSender
      * Ciclo cuyo presupuesto se envía.
      *
      * Prevalece el ciclo abierto, generando su presupuesto si aún no lo
-     * tiene. Si la suscripción ya se renovó no queda ciclo abierto, y
-     * entonces se reenvía el del último ciclo que llegó a generarlo.
+     * tiene. Si la generación falla se aborta el envío: reenviar el del
+     * periodo anterior sería peor que no enviar nada. Solo cuando no queda
+     * ciclo abierto (suscripción ya renovada) se reenvía el del último
+     * ciclo que llegó a generarlo.
      */
     private function resolveCycle(ServiceRenewal $renewal): ?ServiceRenewalCycle
     {
@@ -96,14 +103,18 @@ final class QuoteNotificationSender
             return $renewal->getLastCycleWithQuote();
         }
 
-        if (empty($cycle->quote_id)) {
-            $quote = (new QuoteGenerator())->generate($renewal, $cycle);
-            if (null !== $quote) {
-                Tools::log()->notice('service-renewal-quote-generated', ['%code%' => (string)$quote->codigo]);
-                $cycle->reload();
-            }
+        if (!empty($cycle->quote_id)) {
+            return $cycle;
         }
 
-        return empty($cycle->quote_id) ? $renewal->getLastCycleWithQuote() : $cycle;
+        $quote = (new QuoteGenerator())->generate($renewal, $cycle);
+        if (null === $quote) {
+            return null;
+        }
+
+        Tools::log()->notice('service-renewal-quote-generated', ['%code%' => (string)$quote->codigo]);
+        $cycle->reload();
+
+        return $cycle;
     }
 }
