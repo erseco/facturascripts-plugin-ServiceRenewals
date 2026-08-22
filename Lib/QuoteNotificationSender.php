@@ -86,7 +86,10 @@ final class QuoteNotificationSender
             $notification->attempts = 0;
             $notification->sent_at = null;
             $notification->last_error = null;
-            $notification->save();
+            if (false === $notification->save()) {
+                Tools::log()->error('service-renewal-notification-error');
+                return false;
+            }
         }
 
         if (false === $service->enqueue($notification)) {

@@ -119,6 +119,35 @@ final class QuoteGeneratorTest extends TestCase
         $this->assertSame(1, $count, 'A repeated execution must not create another quote');
     }
 
+    public function testStaleCycleInstanceReusesTheQuoteFoundUnderLock(): void
+    {
+        [$renewal, $cycle] = $this->makeRenewalWithCycle();
+        $generator = new QuoteGenerator();
+
+        // instancia cargada antes de generar: quote_id vacío en memoria aunque
+        // la fila de la base de datos lo tendrá tras la primera generación.
+        // Simula al perdedor de una carrera entre dos procesos paralelos
+        $stale = new ServiceRenewalCycle();
+        $stale->load((string)$cycle->id);
+        $this->assertEmpty($stale->quote_id);
+
+        $first = $generator->generate($renewal, $cycle);
+        $this->assertNotNull($first);
+        $this->cleanup[] = $first;
+
+        // el atajo del principio no dispara (la memoria sigue vacía): la
+        // garantía real es la relectura de quote_id bajo el bloqueo de fila
+        $second = $generator->generate($renewal, $stale);
+        $this->assertNotNull($second);
+        $this->assertSame((int)$first->idpresupuesto, (int)$second->idpresupuesto);
+
+        $this->assertSame(
+            1,
+            PresupuestoCliente::count([Where::eq('codcliente', $renewal->codcustomer)]),
+            'The race loser must reuse the winner quote, not create another one'
+        );
+    }
+
     /** @return array{0: ServiceRenewal, 1: ServiceRenewalCycle} */
     private function makeRenewalWithCycle(): array
     {

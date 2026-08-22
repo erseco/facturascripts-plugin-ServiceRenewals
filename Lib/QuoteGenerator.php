@@ -69,6 +69,27 @@ final class QuoteGenerator
         $db->beginTransaction();
 
         try {
+            // serializa la generación por ciclo: bloquea la fila del ciclo y
+            // vuelve a leer quote_id bajo el lock. La comprobación previa fuera
+            // de la transacción es solo un atajo; la que garantiza que no haya
+            // dos presupuestos para el mismo ciclo es esta, porque sin ella dos
+            // procesos en paralelo crearían cada uno el suyo y quedaría uno
+            // huérfano
+            $rows = $db->select(
+                'SELECT quote_id FROM service_renewal_cycles WHERE id = ' . (int)$cycle->id . ' FOR UPDATE'
+            );
+            if (empty($rows)) {
+                throw new \RuntimeException('Cycle not found');
+            }
+
+            if (!empty($rows[0]['quote_id'])) {
+                // otro proceso ganó la carrera: devolvemos su presupuesto
+                $db->commit();
+                $cycle->reload();
+
+                return $cycle->getQuote();
+            }
+
             $quote = new PresupuestoCliente();
             if (false === $quote->setSubject($customer)) {
                 throw new \RuntimeException('Could not assign the customer to the quote');

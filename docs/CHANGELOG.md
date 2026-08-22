@@ -8,6 +8,12 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ### Fixed
 
+- La generación del presupuesto de un ciclo queda serializada: bloqueo de
+  fila (`FOR UPDATE`) y relectura de `quote_id` dentro de la transacción.
+  Sin ello, dos procesos en paralelo (cron y «Enviar aviso», doble clic,
+  peticiones simultáneas) podían crear cada uno su presupuesto para el mismo
+  ciclo, dejando uno huérfano; ahora el perdedor de la carrera reutiliza el
+  del ganador.
 - El worker valida ahora que el archivo adjunto exista de verdad, no solo sus
   metadatos: si el PDF desaparece del disco se regenera antes de enviar, en
   lugar de salir el correo sin presupuesto aparentando estar todo en orden.
