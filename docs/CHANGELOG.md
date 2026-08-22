@@ -22,6 +22,12 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
   erseco/alpine-facturascripts#24.
 - `docker-compose.yml` publicaba `8080:8000`, pero el contenedor sirve en el
   8080: `http://localhost:8080` no llevaba a ninguna parte.
+- El reenvío de un aviso ya enviado salía **sin el presupuesto adjunto**: al
+  marcar el envío como correcto se borraban los archivos adjuntos pero no sus
+  metadatos, así que `ensureQuoteAttachment()` consideraba que el PDF seguía
+  ahí y no lo regeneraba, y el bucle de envío lo omitía en silencio al no
+  existir el archivo. Ahora los metadatos se limpian junto con los archivos y
+  cada reenvío reconstruye el PDF desde cero.
 - El botón **Enviar aviso** de la ficha dejaba de funcionar en cuanto la
   suscripción se renovaba: buscaba el presupuesto en el ciclo abierto y, al
   pasar el ciclo a «renovado», avisaba de que no había nada que enviar. Ahora

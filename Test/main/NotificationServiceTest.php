@@ -35,6 +35,7 @@ use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalNotification;
 use FacturaScripts\Plugins\ServiceRenewals\Worker\SendServiceRenewalMailWorker;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 /**
  * Tests de las notificaciones: persistencia, deduplicación y fallos de envío.
@@ -112,6 +113,44 @@ final class NotificationServiceTest extends TestCase
         $path = $notification->getFilesFolder() . DIRECTORY_SEPARATOR . $attachments[0]['file'];
         $this->assertFileExists($path);
         $this->assertGreaterThan(0, filesize($path), 'The generated PDF must not be empty');
+    }
+
+    public function testMarkingAsSentClearsAttachmentsForLaterResend(): void
+    {
+        [$renewal, $cycle, $quote] = $this->makeQuoteScenario('billing@example.com');
+
+        $service = new NotificationService();
+        $notification = $service->createQuoteNotification($renewal, $cycle, $quote);
+        $this->assertNotNull($notification);
+        $this->cleanup[] = $notification;
+
+        if (class_exists('Cezpdf')) {
+            $this->assertTrue($service->attachQuotePdf($notification, $quote));
+            $this->assertNotEmpty($notification->getAttachments());
+        }
+
+        // tras el envío correcto, markSent debe limpiar archivos y metadatos:
+        // si conservara los metadatos, ensureQuoteAttachment no regeneraría el
+        // PDF y el reenvío saldría sin adjunto, y en silencio
+        $method = new ReflectionMethod(SendServiceRenewalMailWorker::class, 'markSent');
+        $method->invoke(new SendServiceRenewalMailWorker(), $notification);
+
+        $notification->reload();
+        $this->assertSame([], $notification->getAttachments(), 'Metadata must be cleared so a resend rebuilds the PDF');
+        $this->assertFileDoesNotExist($notification->getFilesFolder());
+
+        if (false === class_exists('Cezpdf')) {
+            return;
+        }
+
+        // y el reenvío reconstruye el adjunto desde cero
+        $ensure = new ReflectionMethod(SendServiceRenewalMailWorker::class, 'ensureQuoteAttachment');
+        $ensure->invoke(new SendServiceRenewalMailWorker(), $notification);
+        $attachments = $notification->getAttachments();
+        $this->assertCount(1, $attachments, 'Resending must regenerate the PDF');
+        $path = $notification->getFilesFolder() . DIRECTORY_SEPARATOR . $attachments[0]['file'];
+        $this->assertFileExists($path);
+        $this->assertGreaterThan(0, filesize($path), 'The regenerated PDF must not be empty');
     }
 
     public function testEmailOverrideTakesPriority(): void

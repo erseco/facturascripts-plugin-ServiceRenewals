@@ -139,9 +139,12 @@ class SendServiceRenewalMailWorker extends WorkerClass
         $notification->status = ServiceRenewalNotification::STATUS_SENT;
         $notification->sent_at = Tools::dateTime();
         $notification->last_error = null;
-        $notification->save();
 
-        // eliminamos los adjuntos temporales tras el envío correcto
+        // el PDF se conserva hasta el envío correcto; tras él, se van archivos
+        // y metadatos, para que un reenvío regenere el adjunto desde cero
+        // (ensureQuoteAttachment solo lo reconstruye si no quedan metadatos)
+        $notification->setAttachments([]);
+        $notification->save();
         $notification->deleteFiles();
 
         // reflejamos el envío en el ciclo cuando es el email del presupuesto
