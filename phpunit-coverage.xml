@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="Test/bootstrap.php" colors="true" failOnWarning="true">
+    <testsuites>
+        <testsuite name="ServiceRenewals"><directory>Test/Plugins</directory></testsuite>
+    </testsuites>
+    <coverage includeUncoveredFiles="true" processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">Plugins/ServiceRenewals/Controller</directory>
+            <directory suffix=".php">Plugins/ServiceRenewals/Extension</directory>
+            <directory suffix=".php">Plugins/ServiceRenewals/Lib</directory>
+            <directory suffix=".php">Plugins/ServiceRenewals/Model</directory>
+            <directory suffix=".php">Plugins/ServiceRenewals/Worker</directory>
+            <file>Plugins/ServiceRenewals/Cron.php</file>
+            <file>Plugins/ServiceRenewals/Init.php</file>
+        </include>
+    </coverage>
+</phpunit>

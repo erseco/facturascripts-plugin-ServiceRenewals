@@ -71,7 +71,7 @@ class Init extends InitClass
     private function setupSettings(): void
     {
         $settings = new Settings();
-        $settings->loadFromCode(ServiceRenewalsSettings::GROUP);
+        $settings->load(ServiceRenewalsSettings::GROUP);
         $settings->name = ServiceRenewalsSettings::GROUP;
 
         foreach (ServiceRenewalsSettings::getDefaults() as $key => $value) {

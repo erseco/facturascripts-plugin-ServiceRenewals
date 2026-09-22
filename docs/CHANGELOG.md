@@ -6,6 +6,11 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ## [Unreleased]
 
+### Changed
+
+- Sustituir `DataBaseWhere` y `loadFromCode()` por las APIs actuales del núcleo, disponibles desde 2025.
+- Medir toda la cobertura PHP, exigir un mínimo del 90 % y enviar los informes a Codecov desde CI.
+
 ### Fixed
 
 - La generación del presupuesto de un ciclo queda serializada: bloqueo de

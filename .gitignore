@@ -47,3 +47,6 @@ themes/
 
 # Overrides de Docker (personalizaciones locales o generados por CI)
 docker-compose.override.yml
+
+/coverage.xml
+/.phpunit.cache/

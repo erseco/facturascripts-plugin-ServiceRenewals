@@ -20,7 +20,7 @@
 
 namespace FacturaScripts\Plugins\ServiceRenewals\Lib;
 
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
+use FacturaScripts\Core\Where;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle;
@@ -40,7 +40,7 @@ final class RenewalCycleFilter
     /**
      * Opciones del filtro tal y como las espera addFilterSelectWhere().
      *
-     * @return array<int, array{label: string, where: DataBaseWhere[]}>
+     * @return array<int, array{label: string, where: Where[]}>
      */
     public static function options(): array
     {
@@ -68,16 +68,16 @@ final class RenewalCycleFilter
         ];
     }
 
-    /** Suscripciones cuyo ciclo vigente tiene presupuesto. @return DataBaseWhere[] */
+    /** Suscripciones cuyo ciclo vigente tiene presupuesto. @return Where[] */
     public static function withQuoteWhere(): array
     {
-        return [new DataBaseWhere('id', self::currentCycle() . ' AND quote_id IS NOT NULL', 'IN')];
+        return [new Where('id', self::currentCycle() . ' AND quote_id IS NOT NULL', 'IN')];
     }
 
-    /** Suscripciones cuyo ciclo vigente no tiene presupuesto. @return DataBaseWhere[] */
+    /** Suscripciones cuyo ciclo vigente no tiene presupuesto. @return Where[] */
     public static function withoutQuoteWhere(): array
     {
-        return [new DataBaseWhere('id', self::currentCycle() . ' AND quote_id IS NOT NULL', 'NOT IN')];
+        return [new Where('id', self::currentCycle() . ' AND quote_id IS NOT NULL', 'NOT IN')];
     }
 
     /**
@@ -88,7 +88,7 @@ final class RenewalCycleFilter
      * next_expiration_date, así que ese ciclo deja de cumplir
      * previous_expiration_date = expiration_date y desaparecería del filtro.
      *
-     * @return DataBaseWhere[]
+     * @return Where[]
      */
     public static function invoicedWhere(): array
     {
@@ -97,16 +97,16 @@ final class RenewalCycleFilter
             . ' AND (previous_expiration_date = ' . ServiceRenewal::tableName() . '.expiration_date'
             . ' OR next_expiration_date = ' . ServiceRenewal::tableName() . '.expiration_date)';
 
-        return [new DataBaseWhere('id', $sql, 'IN')];
+        return [new Where('id', $sql, 'IN')];
     }
 
-    /** Suscripciones cuyo ciclo vigente espera confirmación manual. @return DataBaseWhere[] */
+    /** Suscripciones cuyo ciclo vigente espera confirmación manual. @return Where[] */
     public static function renewalPendingWhere(): array
     {
         $sql = self::currentCycle()
             . " AND status = '" . ServiceRenewalCycle::STATUS_RENEWAL_PENDING . "'";
 
-        return [new DataBaseWhere('id', $sql, 'IN')];
+        return [new Where('id', $sql, 'IN')];
     }
 
     /** Subconsulta del ciclo vigente: el que todavía no ha avanzado la fecha. */
