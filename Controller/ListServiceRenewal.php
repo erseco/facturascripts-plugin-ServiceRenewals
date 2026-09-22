@@ -20,9 +20,9 @@
 
 namespace FacturaScripts\Plugins\ServiceRenewals\Controller;
 
-use FacturaScripts\Core\Where;
 use FacturaScripts\Core\Lib\ExtendedController\ListController;
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Core\Where;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleFilter;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalListDecorator;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;

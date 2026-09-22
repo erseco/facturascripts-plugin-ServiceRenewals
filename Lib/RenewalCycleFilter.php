@@ -20,8 +20,8 @@
 
 namespace FacturaScripts\Plugins\ServiceRenewals\Lib;
 
-use FacturaScripts\Core\Where;
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Core\Where;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle;
 

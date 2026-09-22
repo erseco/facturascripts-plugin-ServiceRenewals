@@ -6,6 +6,10 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ## [Unreleased]
 
+### Added
+
+- Añadir pruebas de vistas, acciones, cron, validación y reintentos de notificaciones con modelos reales.
+
 ### Changed
 
 - Sustituir `DataBaseWhere` y `loadFromCode()` por las APIs actuales del núcleo, disponibles desde 2025.
