@@ -1,5 +1,7 @@
 # ServiceRenewals para FacturaScripts
 
+[![codecov](https://codecov.io/gh/erseco/facturascripts-plugin-ServiceRenewals/branch/main/graph/badge.svg)](https://codecov.io/gh/erseco/facturascripts-plugin-ServiceRenewals)
+
 Plugin para FacturaScripts que gestiona renovaciones de dominios, alojamientos,
 servidores y otros servicios, genera presupuestos y envía avisos automáticos
 antes del vencimiento.

@@ -20,9 +20,9 @@
 
 namespace FacturaScripts\Plugins\ServiceRenewals\Controller;
 
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController\ListController;
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Core\Where;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleFilter;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalListDecorator;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
@@ -139,7 +139,7 @@ class ListServiceRenewal extends ListController
     /**
      * Opciones del filtro rápido de vencimiento.
      *
-     * @return array<int, array{label: string, where: DataBaseWhere[]}>
+     * @return array<int, array{label: string, where: Where[]}>
      */
     private function expiryFilterValues(): array
     {
@@ -152,27 +152,27 @@ class ListServiceRenewal extends ListController
             ],
             [
                 'label' => Tools::lang()->trans('expired'),
-                'where' => [new DataBaseWhere('expiration_date', $today, '<')],
+                'where' => [new Where('expiration_date', $today, '<')],
             ],
             [
                 'label' => Tools::lang()->trans('next-7-days'),
                 'where' => [
-                    new DataBaseWhere('expiration_date', $today, '>='),
-                    new DataBaseWhere('expiration_date', date('Y-m-d', strtotime('+7 days')), '<='),
+                    new Where('expiration_date', $today, '>='),
+                    new Where('expiration_date', date('Y-m-d', strtotime('+7 days')), '<='),
                 ],
             ],
             [
                 'label' => Tools::lang()->trans('next-30-days'),
                 'where' => [
-                    new DataBaseWhere('expiration_date', $today, '>='),
-                    new DataBaseWhere('expiration_date', date('Y-m-d', strtotime('+30 days')), '<='),
+                    new Where('expiration_date', $today, '>='),
+                    new Where('expiration_date', date('Y-m-d', strtotime('+30 days')), '<='),
                 ],
             ],
             [
                 'label' => Tools::lang()->trans('next-60-days'),
                 'where' => [
-                    new DataBaseWhere('expiration_date', $today, '>='),
-                    new DataBaseWhere('expiration_date', date('Y-m-d', strtotime('+60 days')), '<='),
+                    new Where('expiration_date', $today, '>='),
+                    new Where('expiration_date', date('Y-m-d', strtotime('+60 days')), '<='),
                 ],
             ],
         ];
@@ -182,7 +182,7 @@ class ListServiceRenewal extends ListController
      * Opciones del filtro por estado del ciclo. Las condiciones viven en
      * RenewalCycleFilter para poder probarlas fuera del controlador.
      *
-     * @return array<int, array{label: string, where: DataBaseWhere[]}>
+     * @return array<int, array{label: string, where: Where[]}>
      */
     private function cycleFilterValues(): array
     {
