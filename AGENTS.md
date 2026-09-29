@@ -6,7 +6,7 @@ trabajen en este repositorio. `CLAUDE.md`, `GEMINI.md` y
 
 ## Descripción del proyecto
 
-**ServiceRenewals** es un plugin para FacturaScripts (2025+, PHP 8.1+) que
+**ServiceRenewals** es un plugin para FacturaScripts (2025.7+, PHP 8.1+) que
 gestiona renovaciones de servicios recurrentes: perfiles por producto,
 suscripciones por cliente con fecha real de vencimiento, ciclos con
 historial, presupuestos automáticos, emails con PDF y renovación al

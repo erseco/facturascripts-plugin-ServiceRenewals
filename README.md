@@ -64,7 +64,7 @@ El plugin separa tres conceptos (ver `docs/adr/0001`):
 
 ## Requisitos
 
-- FacturaScripts 2025 o superior.
+- FacturaScripts 2025.7 o superior.
 - PHP 8.1 o superior.
 - El cron de FacturaScripts configurado (obligatorio para las
   automatizaciones).
