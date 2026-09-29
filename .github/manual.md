@@ -32,7 +32,7 @@ En el plugin manejarás cuatro conceptos:
 
 ## 3. Requisitos
 
-- FacturaScripts 2025 o superior.
+- FacturaScripts 2025.7 o superior.
 - PHP 8.1 o superior.
 - El cron de FacturaScripts configurado (imprescindible para los
   automatismos).

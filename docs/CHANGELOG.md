@@ -12,6 +12,7 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ### Changed
 
+- Subir `min_version` a 2025.7: el panel usa `Controller::view()` y la generación de presupuestos `Series::default()`, que no existen en 2025.
 - Sustituir `DataBaseWhere` y `loadFromCode()` por las APIs actuales del núcleo, disponibles desde 2025.
 - Medir toda la cobertura PHP, exigir un mínimo del 90 % y enviar los informes a Codecov desde CI.
 
