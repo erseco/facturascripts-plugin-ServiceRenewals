@@ -18,6 +18,11 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ### Fixed
 
+- Dejar vacío el «Precio particular» de una suscripción vuelve a usar el
+  precio del producto: el campo vacío se guardaba como 0 y el presupuesto
+  salía a 0 €. Lo mismo con los «Días de antelación» de la suscripción y del
+  perfil, que dejaban de heredar (#11). Las suscripciones ya guardadas con 0
+  hay que corregirlas vaciando el campo y guardando de nuevo.
 - La generación del presupuesto de un ciclo queda serializada: bloqueo de
   fila (`FOR UPDATE`) y relectura de `quote_id` dentro de la transacción.
   Sin ello, dos procesos en paralelo (cron y «Enviar aviso», doble clic,

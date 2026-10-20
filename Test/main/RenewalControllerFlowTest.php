@@ -201,6 +201,7 @@ final class RenewalControllerFlowTest extends TestCase
         $renewal = $this->makeRenewal();
         $page = $this->page($renewal);
         $this->invoke($page, 'createViews');
+        $this->invoke($page, 'addEditView', 'EditServiceRenewalProfile', 'ServiceRenewalProfile', 'renewal-profile');
         $view = $page->views['EditServiceRenewal'];
         $view->model = $renewal;
 
@@ -208,9 +209,16 @@ final class RenewalControllerFlowTest extends TestCase
         self::assertNull($renewal->price_override);
         self::assertNull($renewal->quote_lead_days);
 
-        $view->processFormData(new Request(['request' => ['price_override' => '0', 'quote_lead_days' => '5']]), 'edit');
+        $request = new Request(['request' => ['price_override' => '0', 'quote_lead_days' => '5.7']]);
+        $view->processFormData($request, 'edit');
         self::assertSame(0.0, $renewal->price_override);
-        self::assertSame(5.0, $renewal->quote_lead_days);
+        self::assertSame(6, $renewal->quote_lead_days);
+
+        $profile = $page->views['EditServiceRenewalProfile'];
+        $profile->processFormData(new Request(['request' => ['quote_lead_days' => '']]), 'edit');
+        self::assertNull($profile->model->quote_lead_days);
+        $profile->processFormData(new Request(['request' => ['quote_lead_days' => '3']]), 'edit');
+        self::assertSame(3, $profile->model->quote_lead_days);
     }
 
     public function testActionsChangeStatusAndConfirmExactlyOnce(): void

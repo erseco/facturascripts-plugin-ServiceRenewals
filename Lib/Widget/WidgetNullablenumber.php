@@ -35,6 +35,12 @@ class WidgetNullablenumber extends WidgetNumber
     public function processFormData(&$model, $request)
     {
         $value = trim((string)$request->request->get($this->fieldname));
-        $model->{$this->fieldname} = '' === $value ? null : (float)$value;
+        if ('' === $value) {
+            $model->{$this->fieldname} = null;
+            return;
+        }
+
+        // con decimal="0" el campo es entero en la base de datos
+        $model->{$this->fieldname} = 0 === $this->decimal ? (int)round((float)$value) : (float)$value;
     }
 }
