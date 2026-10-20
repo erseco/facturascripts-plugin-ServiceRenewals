@@ -195,6 +195,24 @@ final class RenewalControllerFlowTest extends TestCase
         self::assertContains((int)$renewal->id, $ids);
     }
 
+    public function testEmptyOverridesAreSavedAsNullToInherit(): void
+    {
+        // issue #11: un campo vacío debe heredar (null), no guardarse como 0
+        $renewal = $this->makeRenewal();
+        $page = $this->page($renewal);
+        $this->invoke($page, 'createViews');
+        $view = $page->views['EditServiceRenewal'];
+        $view->model = $renewal;
+
+        $view->processFormData(new Request(['request' => ['price_override' => '', 'quote_lead_days' => '']]), 'edit');
+        self::assertNull($renewal->price_override);
+        self::assertNull($renewal->quote_lead_days);
+
+        $view->processFormData(new Request(['request' => ['price_override' => '0', 'quote_lead_days' => '5']]), 'edit');
+        self::assertSame(0.0, $renewal->price_override);
+        self::assertSame(5.0, $renewal->quote_lead_days);
+    }
+
     public function testActionsChangeStatusAndConfirmExactlyOnce(): void
     {
         $renewal = $this->makeRenewal();

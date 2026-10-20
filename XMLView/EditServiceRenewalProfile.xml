@@ -29,7 +29,7 @@
                 <widget type="number" fieldname="default_period_months" decimal="0" min="1" step="1" required="true"/>
             </column>
             <column name="quote-lead-days" numcolumns="3" order="130" description="help-profile-quote-lead-days">
-                <widget type="number" fieldname="quote_lead_days" decimal="0" min="0" step="1"/>
+                <widget type="nullablenumber" fieldname="quote_lead_days" decimal="0" min="0" step="1"/>
             </column>
             <column name="reminder-days" numcolumns="3" order="140" description="help-profile-reminder-days">
                 <widget type="text" fieldname="reminder_days" maxlength="100"/>
