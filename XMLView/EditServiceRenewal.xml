@@ -63,7 +63,7 @@
         </group>
         <group name="overrides" title="renewal-overrides" icon="fa-solid fa-sliders" numcolumns="12">
             <column name="quote-lead-days" numcolumns="3" order="300" description="help-quote-lead-days">
-                <widget type="number" fieldname="quote_lead_days" decimal="0" min="0" step="1"/>
+                <widget type="nullablenumber" fieldname="quote_lead_days" decimal="0" min="0" step="1"/>
             </column>
             <column name="reminder-days" numcolumns="3" order="310" description="help-reminder-days">
                 <widget type="text" fieldname="reminder_days" maxlength="100"/>
@@ -72,7 +72,7 @@
                 <widget type="text" fieldname="email_override" maxlength="255"/>
             </column>
             <column name="price-override" numcolumns="3" order="330" description="help-price-override">
-                <widget type="money" fieldname="price_override"/>
+                <widget type="nullablemoney" fieldname="price_override"/>
             </column>
             <column name="auto-generate-quote" numcolumns="4" order="340" description="help-auto-generate-quote">
                 <widget type="select" fieldname="auto_generate_quote" translate="true">
