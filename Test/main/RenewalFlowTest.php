@@ -400,7 +400,7 @@ final class RenewalFlowTest extends TestCase
             'type' => 'documentlink', 'fieldname' => 'code', 'fieldclick' => 'link', 'children' => [],
         ]);
         $html = $widget->tableCell((object)['code' => 'ALB1', 'link' => 'EditAlbaranCliente?code=7']);
-        $this->assertStringContainsString('href="/EditAlbaranCliente?code=7"', $html);
+        $this->assertStringContainsString('/EditAlbaranCliente?code=7" class="cancelClickable">ALB1</a>', $html);
         $this->assertStringNotContainsString('<a', $widget->tableCell((object)['code' => 'X', 'link' => null]));
 
         // al facturar el albarán se renueva sin esperar al cron
