@@ -217,7 +217,10 @@ final class RenewalProcessor
 
         // detección de la factura
         if (empty($cycle->invoice_id) && !empty($cycle->quote_id)) {
-            $invoiceId = DocumentTransformationFinder::findInvoiceForQuote((int)$cycle->quote_id);
+            $invoiceId = DocumentTransformationFinder::findInvoiceForQuote(
+                (int)$cycle->quote_id,
+                $cycle->documentModel()
+            );
             if (null === $invoiceId) {
                 return;
             }

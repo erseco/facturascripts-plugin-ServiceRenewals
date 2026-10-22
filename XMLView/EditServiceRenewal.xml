@@ -95,6 +95,13 @@
                     <values title="renewal-trigger-manual">manual</values>
                 </widget>
             </column>
+            <column name="document-type" numcolumns="4" order="365" description="help-document-type">
+                <widget type="select" fieldname="document_type" translate="true">
+                    <values title="inherit-from-profile"></values>
+                    <values title="document-type-quote">quote</values>
+                    <values title="document-type-delivery_note">delivery_note</values>
+                </widget>
+            </column>
         </group>
         <group name="notes" title="observations" icon="fa-regular fa-note-sticky" numcolumns="12">
             <column name="notes" numcolumns="12" order="400">

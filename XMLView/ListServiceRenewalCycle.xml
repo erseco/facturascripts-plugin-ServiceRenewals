@@ -15,7 +15,7 @@
             <widget type="text" fieldname="status_label"/>
         </column>
         <column name="quote" order="40">
-            <widget type="text" fieldname="quote_code" fieldclick="quote_id" onclick="EditPresupuestoCliente"/>
+            <widget type="documentlink" fieldname="quote_code" fieldclick="quote_url"/>
         </column>
         <column name="invoice" order="50">
             <widget type="text" fieldname="invoice_code" fieldclick="invoice_link_id" onclick="EditFacturaCliente"/>

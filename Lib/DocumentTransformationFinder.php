@@ -41,24 +41,25 @@ final class DocumentTransformationFinder
 
     /**
      * Identificador de la FacturaCliente generada (directa o indirectamente)
-     * desde el presupuesto, o null si todavía no existe.
+     * desde el documento de renovación, o null si todavía no existe.
      */
-    public static function findInvoiceForQuote(int $quoteId): ?int
+    public static function findInvoiceForQuote(int $quoteId, string $model = 'PresupuestoCliente'): ?int
     {
-        return self::findInvoice('PresupuestoCliente', $quoteId, self::MAX_DEPTH);
+        return self::findInvoice($model, $quoteId, self::MAX_DEPTH);
     }
 
     /**
-     * Camino inverso: presupuesto del que procede la factura, o null si no
-     * viene de ninguno. Permite reaccionar al emitir la factura sin recorrer
-     * todos los ciclos abiertos buscando a cuál pertenece.
+     * Camino inverso: documento del modelo indicado (presupuesto o albarán)
+     * del que procede la factura, o null si no viene de ninguno. Permite
+     * reaccionar al emitir la factura sin recorrer todos los ciclos abiertos
+     * buscando a cuál pertenece.
      */
-    public static function findQuoteForInvoice(int $invoiceId): ?int
+    public static function findQuoteForInvoice(int $invoiceId, string $source = 'PresupuestoCliente'): ?int
     {
-        return self::findQuote('FacturaCliente', $invoiceId, self::MAX_DEPTH);
+        return self::findQuote($source, 'FacturaCliente', $invoiceId, self::MAX_DEPTH);
     }
 
-    private static function findQuote(string $model, int $docId, int $depth): ?int
+    private static function findQuote(string $source, string $model, int $docId, int $depth): ?int
     {
         if ($depth < 1) {
             return null;
@@ -69,9 +70,9 @@ final class DocumentTransformationFinder
             Where::eq('iddoc2', $docId),
         ]);
 
-        // primero buscamos un presupuesto directo
+        // primero buscamos el documento de origen directo
         foreach ($transformations as $transformation) {
-            if ('PresupuestoCliente' === $transformation->model1 && !empty($transformation->iddoc1)) {
+            if ($source === $transformation->model1 && !empty($transformation->iddoc1)) {
                 return (int)$transformation->iddoc1;
             }
         }
@@ -82,7 +83,12 @@ final class DocumentTransformationFinder
                 continue;
             }
 
-            $quoteId = self::findQuote((string)$transformation->model1, (int)$transformation->iddoc1, $depth - 1);
+            $quoteId = self::findQuote(
+                $source,
+                (string)$transformation->model1,
+                (int)$transformation->iddoc1,
+                $depth - 1
+            );
             if (null !== $quoteId) {
                 return $quoteId;
             }

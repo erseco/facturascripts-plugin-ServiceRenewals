@@ -130,7 +130,7 @@
                             </td>
                             <td>
                                 {% if renewal.last_quote_id %}
-                                    <a href="EditPresupuestoCliente?code={{ renewal.last_quote_id }}">{{ renewal.last_quote_code }}</a>
+                                    <a href="{{ renewal.last_quote_url }}">{{ renewal.last_quote_code }}</a>
                                 {% endif %}
                             </td>
                             <td>

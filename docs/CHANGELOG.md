@@ -8,6 +8,12 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ### Added
 
+- Elegir el documento de renovación: presupuesto o albarán (#12). Se
+  configura en los ajustes generales, en el perfil del producto y en la
+  suscripción, con herencia. El albarán se adjunta al aviso igual que el
+  presupuesto y, al facturarlo, la suscripción se renueva. Nuevo marcador
+  `{{document_name}}`; si ya personalizaste el cuerpo del email, cámbialo tú
+  si quieres que no diga «presupuesto».
 - Añadir pruebas de vistas, acciones, cron, validación y reintentos de notificaciones con modelos reales.
 
 ### Changed

@@ -21,6 +21,7 @@
 namespace FacturaScripts\Plugins\ServiceRenewals\Lib;
 
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalProfile;
 
 /**
  * Acceso tipado a la configuración global del plugin.
@@ -44,10 +45,11 @@ final class ServiceRenewalsSettings
         'default_reminder_days' => '15,7,3',
         'default_auto_send_quote' => true,
         'default_renewal_trigger' => 'invoice',
+        'default_document_type' => 'quote',
         'quote_email_subject' => 'Renovación de {{service_title}} ({{service_identifier}})',
         'quote_email_body' => "Estimado cliente {{client_name}}:\n\n"
             . "El servicio {{service_title}} ({{service_identifier}}) vence el {{expiration_date}}.\n"
-            . "Le adjuntamos el presupuesto {{quote_code}} para renovarlo hasta el {{next_expiration_date}}.\n\n"
+            . "Le adjuntamos el {{document_name}} {{quote_code}} para renovarlo hasta el {{next_expiration_date}}.\n\n"
             . "Un saludo,\n{{company_name}}",
         'reminder_email_subject' => 'Recordatorio: {{service_title}} ({{service_identifier}}) vence pronto',
         'reminder_email_body' => "Estimado cliente {{client_name}}:\n\n"
@@ -108,6 +110,14 @@ final class ServiceRenewalsSettings
         $value = (string)self::get('default_renewal_trigger');
 
         return in_array($value, ['invoice', 'manual'], true) ? $value : 'invoice';
+    }
+
+    /** Tipo de documento de renovación predeterminado: quote o delivery_note. */
+    public static function defaultDocumentType(): string
+    {
+        $value = (string)self::get('default_document_type');
+
+        return isset(ServiceRenewalProfile::DOCUMENT_MODELS[$value]) ? $value : 'quote';
     }
 
     public static function quoteEmailSubject(): string

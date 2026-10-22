@@ -20,11 +20,11 @@
 
 namespace FacturaScripts\Plugins\ServiceRenewals\Model;
 
+use FacturaScripts\Core\Model\Base\SalesDocument;
 use FacturaScripts\Core\Template\ModelClass;
 use FacturaScripts\Core\Template\ModelTrait;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Dinamic\Model\PresupuestoCliente;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\DocumentTransformationFinder;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalDateCalculator;
 
@@ -87,8 +87,15 @@ class ServiceRenewalCycle extends ModelClass
     /** @var string Estado del ciclo. */
     public $status;
 
-    /** @var int Presupuesto generado (idpresupuesto); puede ser null. */
+    /**
+     * @var int Documento de renovación generado (presupuesto o albarán según
+     *          document_model); puede ser null. Conserva el nombre de cuando solo
+     *          había presupuestos para no migrar datos.
+     */
     public $quote_id;
+
+    /** @var string Modelo del documento de quote_id; null en ciclos antiguos (PresupuestoCliente). */
+    public $document_model;
 
     /** @var int Factura detectada (idfactura); puede ser null. */
     public $invoice_id;
@@ -139,13 +146,21 @@ class ServiceRenewalCycle extends ModelClass
         return $renewal;
     }
 
-    public function getQuote(): ?PresupuestoCliente
+    /** Modelo del núcleo del documento de renovación del ciclo. */
+    public function documentModel(): string
+    {
+        return empty($this->document_model) ? 'PresupuestoCliente' : $this->document_model;
+    }
+
+    /** Documento de renovación del ciclo: presupuesto o albarán. */
+    public function getQuote(): ?SalesDocument
     {
         if (empty($this->quote_id)) {
             return null;
         }
 
-        $quote = new PresupuestoCliente();
+        $class = '\\FacturaScripts\\Dinamic\\Model\\' . $this->documentModel();
+        $quote = new $class();
 
         return $quote->load((string)$this->quote_id) ? $quote : null;
     }
@@ -177,7 +192,7 @@ class ServiceRenewalCycle extends ModelClass
             return $invoice;
         }
 
-        $invoiceId = DocumentTransformationFinder::findInvoiceForQuote((int)$this->quote_id);
+        $invoiceId = DocumentTransformationFinder::findInvoiceForQuote((int)$this->quote_id, $this->documentModel());
         if (null === $invoiceId) {
             return null;
         }

@@ -25,29 +25,31 @@ use FacturaScripts\Core\Base\DataBase;
 use FacturaScripts\Core\DataSrc\Almacenes;
 use FacturaScripts\Core\DataSrc\Series;
 use FacturaScripts\Core\Lib\Calculator;
+use FacturaScripts\Core\Model\Base\SalesDocument;
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Dinamic\Model\LineaPresupuestoCliente;
-use FacturaScripts\Dinamic\Model\PresupuestoCliente;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle;
+use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalProfile;
 use Throwable;
 
 /**
- * Generación del presupuesto de renovación de un ciclo.
+ * Generación del documento de renovación de un ciclo: presupuesto o albarán
+ * según el tipo efectivo de la suscripción.
  *
- * Usa las APIs del núcleo (PresupuestoCliente + Calculator); nunca escribe
- * directamente en las tablas de presupuestos. Cada ciclo genera como máximo
- * un presupuesto: si el ciclo ya tiene uno, se devuelve el existente.
+ * Usa las APIs del núcleo (PresupuestoCliente/AlbaranCliente + Calculator);
+ * nunca escribe directamente en las tablas de documentos. Cada ciclo genera
+ * como máximo un documento, sea cual sea su tipo: si el ciclo ya tiene uno,
+ * se devuelve el existente.
  *
  * @author Ernesto Serrano <info@ernesto.es>
  */
 final class QuoteGenerator
 {
     /**
-     * Genera el presupuesto del ciclo, o devuelve el existente.
+     * Genera el documento del ciclo, o devuelve el existente.
      * En caso de error deja el ciclo en estado failed con el error registrado.
      */
-    public function generate(ServiceRenewal $renewal, ServiceRenewalCycle $cycle): ?PresupuestoCliente
+    public function generate(ServiceRenewal $renewal, ServiceRenewalCycle $cycle): ?SalesDocument
     {
         if (!empty($cycle->quote_id)) {
             return $cycle->getQuote();
@@ -60,10 +62,16 @@ final class QuoteGenerator
             return null;
         }
 
+        // el tipo se fija al generar: cambiar la configuración después no
+        // afecta a los ciclos que ya tienen documento
+        $model = ServiceRenewalProfile::DOCUMENT_MODELS[$renewal->effectiveDocumentType()];
+        $class = '\\FacturaScripts\\Dinamic\\Model\\' . $model;
+        $lineClass = '\\FacturaScripts\\Dinamic\\Model\\Linea' . $model;
+
         // fuera de la transacción: fuerza la creación de las tablas de
         // documentos que falten (no se pueden crear tablas en transacción)
-        new PresupuestoCliente();
-        new LineaPresupuestoCliente();
+        new $class();
+        new $lineClass();
 
         $db = new DataBase();
         $db->beginTransaction();
@@ -90,7 +98,7 @@ final class QuoteGenerator
                 return $cycle->getQuote();
             }
 
-            $quote = new PresupuestoCliente();
+            $quote = new $class();
             if (false === $quote->setSubject($customer)) {
                 throw new \RuntimeException('Could not assign the customer to the quote');
             }
@@ -129,6 +137,7 @@ final class QuoteGenerator
             }
 
             $cycle->quote_id = $quote->id();
+            $cycle->document_model = $model;
             $cycle->status = ServiceRenewalCycle::STATUS_QUOTE_CREATED;
             $cycle->quote_created_at = Tools::dateTime();
             $cycle->last_error = null;

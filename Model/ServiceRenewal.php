@@ -20,6 +20,7 @@
 
 namespace FacturaScripts\Plugins\ServiceRenewals\Model;
 
+use FacturaScripts\Core\Model\Base\SalesDocument;
 use FacturaScripts\Core\Template\ModelClass;
 use FacturaScripts\Core\Template\ModelTrait;
 use FacturaScripts\Core\Tools;
@@ -27,7 +28,6 @@ use FacturaScripts\Core\Validator;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Dinamic\Model\PresupuestoCliente;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\ReminderDayList;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalDateCalculator;
@@ -114,6 +114,9 @@ class ServiceRenewal extends ModelClass
 
     /** @var string Política de renovación propia; null hereda del perfil o la global. */
     public $renewal_trigger;
+
+    /** @var string Tipo de documento de renovación propio; null hereda del perfil o la global. */
+    public $document_type;
 
     /** @var string Estado del servicio. */
     public $status;
@@ -230,6 +233,21 @@ class ServiceRenewal extends ModelClass
         return ServiceRenewalsSettings::defaultRenewalTrigger();
     }
 
+    /** Tipo de documento de renovación: quote o delivery_note. */
+    public function effectiveDocumentType(): string
+    {
+        if (!empty($this->document_type)) {
+            return $this->document_type;
+        }
+
+        $profile = $this->getProfile();
+        if (null !== $profile && !empty($profile->document_type)) {
+            return $profile->document_type;
+        }
+
+        return ServiceRenewalsSettings::defaultDocumentType();
+    }
+
     public function effectiveServiceType(): string
     {
         if (!empty($this->service_type)) {
@@ -290,7 +308,7 @@ class ServiceRenewal extends ModelClass
      * se devuelve el del último ciclo que llegó a generarlo. Permite acceder
      * al presupuesto desde la ficha de la suscripción.
      */
-    public function getLastQuote(): ?PresupuestoCliente
+    public function getLastQuote(): ?SalesDocument
     {
         if (empty($this->id)) {
             return null;
@@ -474,6 +492,14 @@ class ServiceRenewal extends ModelClass
         }
         if ('' === $this->service_type) {
             $this->service_type = null;
+        }
+
+        if (false === ServiceRenewalProfile::isValidDocumentType($this->document_type)) {
+            Tools::log()->warning('service-renewal-invalid-document-type');
+            return false;
+        }
+        if ('' === $this->document_type) {
+            $this->document_type = null;
         }
 
         // vinculamos el perfil del producto si no se ha indicado
