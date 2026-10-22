@@ -76,7 +76,8 @@ final class RenewalListDecorator
             // sin código dejamos null para no generar un enlace roto
             $quote = $renewal->getLastQuote();
             $renewal->last_quote_code = null !== $quote ? (string)$quote->codigo : null;
-            $renewal->last_quote_id = null !== $quote ? $quote->idpresupuesto : null;
+            $renewal->last_quote_id = null !== $quote ? $quote->id() : null;
+            $renewal->last_quote_url = null !== $quote ? $quote->url() : null;
 
             $invoice = $renewal->getLastInvoice();
             $renewal->last_invoice_code = null !== $invoice ? (string)$invoice->codigo : null;

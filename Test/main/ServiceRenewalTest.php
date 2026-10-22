@@ -141,6 +141,36 @@ final class ServiceRenewalTest extends TestCase
         $this->assertSame('manual', $renewal->effectiveRenewalTrigger());
     }
 
+    public function testDocumentTypeInheritsFromProfileAndSettings(): void
+    {
+        [$customer, $product] = $this->makeFixtures();
+
+        $profile = new ServiceRenewalProfile();
+        $profile->idproduct = $product->idproducto;
+        $this->assertTrue($profile->save());
+        $this->cleanup[] = $profile;
+
+        $renewal = $this->validRenewal($customer, $product);
+        $this->assertTrue($renewal->save());
+        $this->cleanup[] = $renewal;
+
+        // sin valor en la suscripción ni en el perfil se usa la configuración general
+        $this->assertSame('quote', $renewal->effectiveDocumentType());
+
+        $profile->document_type = 'delivery_note';
+        $this->assertTrue($profile->save());
+        // instancia nueva: la suscripción cachea el perfil
+        $renewal = ServiceRenewal::find($renewal->id);
+        $this->assertSame('delivery_note', $renewal->effectiveDocumentType());
+
+        $renewal->document_type = 'quote';
+        $this->assertTrue($renewal->save());
+        $this->assertSame('quote', $renewal->effectiveDocumentType());
+
+        $renewal->document_type = 'invoice';
+        $this->assertFalse($renewal->save(), 'Unknown document types are rejected');
+    }
+
     public function testScannerSelectsOnlyDueActiveSubscriptions(): void
     {
         [$customer, $product] = $this->makeFixtures();

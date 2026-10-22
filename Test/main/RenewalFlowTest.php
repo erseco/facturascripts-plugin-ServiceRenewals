@@ -25,16 +25,19 @@ use FacturaScripts\Core\DataSrc\Empresas;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Core\WorkQueue;
 use FacturaScripts\Dinamic\Lib\BusinessDocumentGenerator;
+use FacturaScripts\Dinamic\Model\AlbaranCliente;
 use FacturaScripts\Dinamic\Model\DocTransformation;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Dinamic\Model\PresupuestoCliente;
 use FacturaScripts\Plugins\ServiceRenewals\Extension\Model\DocTransformation as DocTransformationExtension;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\DocumentTransformationFinder;
+use FacturaScripts\Plugins\ServiceRenewals\Lib\NotificationService;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleFilter;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalCycleService;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalDateCalculator;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalListDecorator;
 use FacturaScripts\Plugins\ServiceRenewals\Lib\RenewalProcessor;
+use FacturaScripts\Plugins\ServiceRenewals\Lib\Widget\WidgetDocumentlink;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle;
 use PHPUnit\Framework\TestCase;
@@ -366,6 +369,48 @@ final class RenewalFlowTest extends TestCase
         $this->assertSame('2027-08-01', RenewalDateCalculator::toIso($renewal->expiration_date));
     }
 
+    public function testDeliveryNoteRenewsWhenItIsInvoiced(): void
+    {
+        $renewal = $this->makeRenewal('2026-08-01', 12, false);
+        $renewal->document_type = 'delivery_note';
+        $this->assertTrue($renewal->save());
+
+        $processor = new RenewalProcessor();
+        $processor->process('2026-07-15');
+        $processor->process('2026-07-15');
+
+        $cycle = ServiceRenewalCycle::findWhere([Where::eq('service_renewal_id', $renewal->id)]);
+        $this->assertNotNull($cycle);
+        $this->registerCycleCleanup($cycle);
+
+        // un único albarán por ciclo y ningún presupuesto
+        $this->assertSame('AlbaranCliente', $cycle->document_model);
+        $this->assertInstanceOf(AlbaranCliente::class, $cycle->getQuote());
+        $this->assertSame(1, AlbaranCliente::count([Where::eq('codcliente', $renewal->codcustomer)]));
+        $this->assertSame(0, PresupuestoCliente::count([Where::eq('codcliente', $renewal->codcustomer)]));
+
+        // el aviso y el listado hablan del albarán y enlazan con él
+        $placeholders = (new NotificationService())->buildPlaceholders($renewal, $cycle, $cycle->getQuote());
+        $this->assertSame('albarán', $placeholders['document_name']);
+        RenewalListDecorator::decorateFull([$renewal], '2026-07-15');
+        $this->assertSame($cycle->getQuote()->url(), $renewal->last_quote_url);
+        $this->assertStringStartsWith('EditAlbaranCliente', $renewal->last_quote_url);
+
+        $widget = new WidgetDocumentlink([
+            'type' => 'documentlink', 'fieldname' => 'code', 'fieldclick' => 'link', 'children' => [],
+        ]);
+        $html = $widget->tableCell((object)['code' => 'ALB1', 'link' => 'EditAlbaranCliente?code=7']);
+        $this->assertStringContainsString('href="/EditAlbaranCliente?code=7"', $html);
+        $this->assertStringNotContainsString('<a', $widget->tableCell((object)['code' => 'X', 'link' => null]));
+
+        // al facturar el albarán se renueva sin esperar al cron
+        $this->transformQuoteToInvoice($cycle);
+        $cycle->reload();
+        $renewal->reload();
+        $this->assertSame(ServiceRenewalCycle::STATUS_RENEWED, $cycle->status);
+        $this->assertSame('2027-08-01', RenewalDateCalculator::toIso($renewal->expiration_date));
+    }
+
     public function testManualPolicyStillWaitsWhenTheInvoiceIsIssued(): void
     {
         $renewal = $this->makeRenewal('2026-08-01', 12, true);
@@ -464,7 +509,7 @@ final class RenewalFlowTest extends TestCase
             'Could not transform the quote into an invoice: ' . $this->recentCoreLogMessage()
         );
 
-        $invoiceId = DocumentTransformationFinder::findInvoiceForQuote((int)$quote->idpresupuesto);
+        $invoiceId = DocumentTransformationFinder::findInvoiceForQuote((int)$quote->id(), $quote->modelClassName());
         $this->assertNotNull($invoiceId, 'The transformation must be recorded');
 
         $invoice = new FacturaCliente();

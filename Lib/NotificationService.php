@@ -21,15 +21,16 @@
 namespace FacturaScripts\Plugins\ServiceRenewals\Lib;
 
 use FacturaScripts\Core\DataSrc\Empresas;
+use FacturaScripts\Core\Model\Base\SalesDocument;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Validator;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Core\WorkQueue;
 use FacturaScripts\Dinamic\Lib\ExportManager;
-use FacturaScripts\Dinamic\Model\PresupuestoCliente;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewal;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalNotification;
+use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalProfile;
 use Throwable;
 
 /**
@@ -50,7 +51,7 @@ final class NotificationService
     public function createQuoteNotification(
         ServiceRenewal $renewal,
         ServiceRenewalCycle $cycle,
-        PresupuestoCliente $quote
+        SalesDocument $quote
     ): ?ServiceRenewalNotification {
         $existing = $this->find($cycle->id, ServiceRenewalNotification::TYPE_QUOTE, 0);
         if (null !== $existing) {
@@ -166,7 +167,7 @@ final class NotificationService
      * Lo llama el worker antes de enviar, no la petición web: exportar el PDF
      * es lo más caro del flujo.
      */
-    public function attachQuotePdf(ServiceRenewalNotification $notification, PresupuestoCliente $quote): bool
+    public function attachQuotePdf(ServiceRenewalNotification $notification, SalesDocument $quote): bool
     {
         try {
             // la librería de PDF cachea aquí las métricas de las fuentes; si la
@@ -215,7 +216,7 @@ final class NotificationService
     public function buildPlaceholders(
         ServiceRenewal $renewal,
         ServiceRenewalCycle $cycle,
-        ?PresupuestoCliente $quote = null
+        ?SalesDocument $quote = null
     ): array {
         $customer = $renewal->getCustomer();
         $company = Empresas::default();
@@ -230,6 +231,9 @@ final class NotificationService
             'provider_name' => (string)($renewal->provider_name ?? ''),
             'expiration_date' => Tools::date($cycle->previous_expiration_date),
             'next_expiration_date' => Tools::date($cycle->next_expiration_date),
+            'document_name' => mb_strtolower(Tools::lang()->trans('document-type-' . (null !== $quote
+                ? array_search($quote->modelClassName(), ServiceRenewalProfile::DOCUMENT_MODELS, true)
+                : $renewal->effectiveDocumentType()))),
             'quote_code' => null !== $quote ? (string)($quote->codigo ?? '') : '',
             'quote_total' => null !== $quote ? Tools::money($quote->total ?? 0.0) : '',
             'company_name' => (string)($company->nombre ?? ''),

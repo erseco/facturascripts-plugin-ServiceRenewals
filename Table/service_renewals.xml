@@ -100,6 +100,11 @@
         <null>YES</null>
     </column>
     <column>
+        <name>document_type</name>
+        <type>character varying(20)</type>
+        <null>YES</null>
+    </column>
+    <column>
         <name>status</name>
         <type>character varying(20)</type>
         <null>NO</null>

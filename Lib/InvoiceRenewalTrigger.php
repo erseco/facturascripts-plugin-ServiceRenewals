@@ -23,6 +23,7 @@ namespace FacturaScripts\Plugins\ServiceRenewals\Lib;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalCycle;
+use FacturaScripts\Plugins\ServiceRenewals\Model\ServiceRenewalProfile;
 use Throwable;
 
 /**
@@ -70,18 +71,28 @@ final class InvoiceRenewalTrigger
     /** Ciclo pendiente al que pertenece la factura, si lo hay. */
     private static function findCycleForInvoice(int $invoiceId): ?ServiceRenewalCycle
     {
-        $quoteId = DocumentTransformationFinder::findQuoteForInvoice($invoiceId);
-        if (null === $quoteId) {
-            return null;
+        foreach (ServiceRenewalProfile::DOCUMENT_MODELS as $model) {
+            $quoteId = DocumentTransformationFinder::findQuoteForInvoice($invoiceId, $model);
+            if (null === $quoteId) {
+                continue;
+            }
+
+            // los ciclos antiguos no guardan el modelo: son presupuestos
+            $cycles = ServiceRenewalCycle::all([
+                Where::eq('quote_id', $quoteId),
+                Where::in('status', [
+                    ServiceRenewalCycle::STATUS_QUOTE_CREATED,
+                    ServiceRenewalCycle::STATUS_QUOTE_SENT,
+                    ServiceRenewalCycle::STATUS_INVOICED,
+                ]),
+            ]);
+            foreach ($cycles as $cycle) {
+                if ($cycle->documentModel() === $model) {
+                    return $cycle;
+                }
+            }
         }
 
-        return ServiceRenewalCycle::findWhere([
-            Where::eq('quote_id', $quoteId),
-            Where::in('status', [
-                ServiceRenewalCycle::STATUS_QUOTE_CREATED,
-                ServiceRenewalCycle::STATUS_QUOTE_SENT,
-                ServiceRenewalCycle::STATUS_INVOICED,
-            ]),
-        ]);
+        return null;
     }
 }

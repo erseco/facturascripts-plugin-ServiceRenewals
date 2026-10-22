@@ -30,6 +30,12 @@
                     <values title="renewal-trigger-manual">manual</values>
                 </widget>
             </column>
+            <column name="default-document-type" numcolumns="4" order="155" description="help-document-type">
+                <widget type="select" fieldname="default_document_type" translate="true">
+                    <values title="document-type-quote">quote</values>
+                    <values title="document-type-delivery_note">delivery_note</values>
+                </widget>
+            </column>
             <column name="from-email" numcolumns="4" order="160">
                 <widget type="text" fieldname="from_email" maxlength="255"/>
             </column>

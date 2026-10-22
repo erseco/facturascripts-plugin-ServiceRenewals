@@ -101,6 +101,10 @@ En **Administración → Renovaciones de servicios** puedes ajustar:
 - Días de recordatorio predeterminados (lista separada por comas: `15,7,3`).
 - Envío automático del presupuesto por email.
 - Política de renovación predeterminada (al facturar o manual).
+- Documento de renovación predeterminado: presupuesto (el cliente lo acepta)
+  o albarán (se emite directamente, por ejemplo en alquileres o
+  mantenimientos). El perfil del producto y la suscripción pueden
+  sobrescribirlo.
 - Asunto y cuerpo de los emails de presupuesto y de recordatorio.
 - CC y BCC globales, email remitente y número máximo de reintentos.
 
@@ -117,8 +121,9 @@ Las plantillas son de texto plano y admiten estos marcadores:
 | `{{provider_name}}` | Proveedor o registrador |
 | `{{expiration_date}}` | Fecha de vencimiento actual |
 | `{{next_expiration_date}}` | Fecha tras la renovación |
-| `{{quote_code}}` | Código del presupuesto |
-| `{{quote_total}}` | Importe total del presupuesto |
+| `{{document_name}}` | «presupuesto» o «albarán», según el documento |
+| `{{quote_code}}` | Código del presupuesto o albarán |
+| `{{quote_total}}` | Importe total del presupuesto o albarán |
 | `{{company_name}}` | Nombre de tu empresa |
 
 Los marcadores desconocidos se conservan visibles en el texto y quedan
