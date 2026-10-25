@@ -55,6 +55,11 @@
         <null>YES</null>
     </column>
     <column>
+        <name>document_type</name>
+        <type>character varying(20)</type>
+        <null>YES</null>
+    </column>
+    <column>
         <name>created_at</name>
         <type>timestamp</type>
         <null>YES</null>

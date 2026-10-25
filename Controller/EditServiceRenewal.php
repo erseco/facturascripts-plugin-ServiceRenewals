@@ -193,6 +193,7 @@ class EditServiceRenewal extends EditController
                     // sin código: dejamos null para que la columna no genere un enlace roto
                     $quote = $cycle->getQuote();
                     $cycle->quote_code = null !== $quote ? (string)$quote->codigo : null;
+                    $cycle->quote_url = null !== $quote ? $quote->url() : null;
                     // resolveInvoice: la factura recién emitida aparece sin esperar al cron.
                     // el enlace usa un campo aparte para no tocar invoice_id, que se persiste
                     $invoice = $cycle->resolveInvoice();
@@ -242,7 +243,7 @@ class EditServiceRenewal extends EditController
             'action' => $quote->url(),
             'color' => 'secondary',
             'icon' => 'fa-solid fa-file-invoice-dollar',
-            'label' => 'view-estimation',
+            'label' => 'PresupuestoCliente' === $quote->modelClassName() ? 'view-estimation' : 'view-delivery-note',
         ]);
     }
 

@@ -35,6 +35,11 @@
         <null>YES</null>
     </column>
     <column>
+        <name>document_model</name>
+        <type>character varying(30)</type>
+        <null>YES</null>
+    </column>
+    <column>
         <name>invoice_id</name>
         <type>integer</type>
         <null>YES</null>

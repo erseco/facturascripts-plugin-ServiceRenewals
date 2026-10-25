@@ -45,6 +45,12 @@ class ServiceRenewalProfile extends ModelClass
     /** Renovación mediante confirmación manual. */
     public const TRIGGER_MANUAL = 'manual';
 
+    /** Tipos de documento de renovación y el modelo del núcleo que generan. */
+    public const DOCUMENT_MODELS = [
+        'quote' => 'PresupuestoCliente',
+        'delivery_note' => 'AlbaranCliente',
+    ];
+
     /** Tipos de servicio admitidos. */
     public const SERVICE_TYPES = [
         'domain',
@@ -87,6 +93,9 @@ class ServiceRenewalProfile extends ModelClass
 
     /** @var string Política de renovación; null usa la configuración global. */
     public $renewal_trigger;
+
+    /** @var string Tipo de documento de renovación (quote o delivery_note); null usa la configuración global. */
+    public $document_type;
 
     /** @var string Fecha y hora de creación. */
     public $created_at;
@@ -168,9 +177,23 @@ class ServiceRenewalProfile extends ModelClass
             $this->renewal_trigger = null;
         }
 
+        if (false === self::isValidDocumentType($this->document_type)) {
+            Tools::log()->warning('service-renewal-invalid-document-type');
+            return false;
+        }
+        if ('' === $this->document_type) {
+            $this->document_type = null;
+        }
+
         $this->updated_at = Tools::dateTime();
 
         return parent::test();
+    }
+
+    /** Tipo de documento admitido; vacío o null significan heredar. */
+    public static function isValidDocumentType(?string $type): bool
+    {
+        return null === $type || '' === $type || isset(self::DOCUMENT_MODELS[$type]);
     }
 
     public function url(string $type = 'auto', string $list = 'List'): string

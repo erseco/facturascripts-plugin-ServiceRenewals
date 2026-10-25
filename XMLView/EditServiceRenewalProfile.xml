@@ -47,6 +47,13 @@
                     <values title="renewal-trigger-manual">manual</values>
                 </widget>
             </column>
+            <column name="document-type" numcolumns="3" order="175" description="help-profile-document-type">
+                <widget type="select" fieldname="document_type" translate="true">
+                    <values title="default"></values>
+                    <values title="document-type-quote">quote</values>
+                    <values title="document-type-delivery_note">delivery_note</values>
+                </widget>
+            </column>
         </group>
     </columns>
 </view>
