@@ -6,6 +6,8 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ## [Unreleased]
 
+## [1.6] - 2026-10-25
+
 ### Added
 
 - Elegir el documento de renovación: presupuesto o albarán (#12). Se
@@ -14,13 +16,11 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
   presupuesto y, al facturarlo, la suscripción se renueva. Nuevo marcador
   `{{document_name}}`; si ya personalizaste el cuerpo del email, cámbialo tú
   si quieres que no diga «presupuesto».
-- Añadir pruebas de vistas, acciones, cron, validación y reintentos de notificaciones con modelos reales.
 
 ### Changed
 
-- Subir `min_version` a 2025.7: el panel usa `Controller::view()` y la generación de presupuestos `Series::default()`, que no existen en 2025.
-- Sustituir `DataBaseWhere` y `loadFromCode()` por las APIs actuales del núcleo, disponibles desde 2025.
-- Medir toda la cobertura PHP, exigir un mínimo del 90 % y enviar los informes a Codecov desde CI.
+- Las herramientas de desarrollo (phpcs, php-cs-fixer y phpunit) se instalan
+  fuera del `vendor` del núcleo (#10).
 
 ### Fixed
 
@@ -29,6 +29,39 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
   salía a 0 €. Lo mismo con los «Días de antelación» de la suscripción y del
   perfil, que dejaban de heredar (#11). Las suscripciones ya guardadas con 0
   hay que corregirlas vaciando el campo y guardando de nuevo.
+
+## [1.5] - 2026-09-29
+
+### Changed
+
+- Subir `min_version` a 2025.7: el panel usa `Controller::view()` y la generación de presupuestos `Series::default()`, que no existen en 2025.
+
+## [1.4] - 2026-09-22
+
+### Added
+
+- Añadir pruebas de vistas, acciones, cron, validación y reintentos de notificaciones con modelos reales.
+
+### Changed
+
+- Sustituir `DataBaseWhere` y `loadFromCode()` por las APIs actuales del núcleo, disponibles desde 2025.
+- Medir toda la cobertura PHP, exigir un mínimo del 90 % y enviar los informes a Codecov desde CI.
+
+## [1.3] - 2026-08-22
+
+### Changed
+
+- **Enviar aviso** reinicia también los avisos fallidos con los reintentos
+  agotados (estado, contador y último error): tal cual, el worker descartaba
+  el evento sin enviar nada y sin dejar rastro útil.
+- **Enviar aviso** genera el presupuesto cuando el ciclo abierto todavía no
+  tiene ninguno, en vez de limitarse a avisar de que no hay nada que enviar.
+  Nunca abre el ciclo del periodo siguiente: eso sigue siendo trabajo del
+  botón «Generar presupuesto». La lógica se mueve del controlador a
+  `Lib/QuoteNotificationSender` para poder probarla.
+
+### Fixed
+
 - La generación del presupuesto de un ciclo queda serializada: bloqueo de
   fila (`FOR UPDATE`) y relectura de `quote_id` dentro de la transacción.
   Sin ello, dos procesos en paralelo (cron y «Enviar aviso», doble clic,
@@ -77,6 +110,8 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
   `getOpenCycle()` que ya se corrigió en el listado, la ficha y el panel; esta
   acción se había quedado fuera.
 
+## [1.2] - 2026-07-25
+
 ### Added
 
 - Acceso a la factura de renovación desde la ficha de la suscripción: botón
@@ -113,14 +148,6 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
 
 ### Changed
 
-- **Enviar aviso** reinicia también los avisos fallidos con los reintentos
-  agotados (estado, contador y último error): tal cual, el worker descartaba
-  el evento sin enviar nada y sin dejar rastro útil.
-- **Enviar aviso** genera el presupuesto cuando el ciclo abierto todavía no
-  tiene ninguno, en vez de limitarse a avisar de que no hay nada que enviar.
-  Nunca abre el ciclo del periodo siguiente: eso sigue siendo trabajo del
-  botón «Generar presupuesto». La lógica se mueve del controlador a
-  `Lib/QuoteNotificationSender` para poder probarla.
 - La línea del presupuesto de renovación ya no incluye el proveedor: se
   queda solo con el identificador del servicio y el periodo cubierto, que es
   lo que describe qué se renueva. El proveedor sigue disponible en la ficha
@@ -150,6 +177,11 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
   avanza y deja de coincidir. Ahora acepta también el ciclo cuyo
   `next_expiration_date` es el vencimiento actual, que es exactamente el que
   acaba de renovar.
+
+## [1.1] - 2026-07-24
+
+### Fixed
+
 - Error al abrir la ficha de una suscripción (`EditServiceRenewal`): se
   llamaba al método inexistente `allWhereEq()` al cargar las notificaciones.
   Sustituido por la API correcta del núcleo `Model::all([Where::eq(...)])`.
@@ -193,3 +225,12 @@ la primera versión publicada es la `1.0` (etiqueta `1.0`).
   notificaciones, renovación, permisos).
 - Entorno de desarrollo Docker con MariaDB, Mailpit y datos de demostración.
 - Publicación automática en la forja de FacturaScripts desde GitHub Actions.
+
+[Unreleased]: https://github.com/erseco/facturascripts-plugin-ServiceRenewals/compare/1.6...HEAD
+[1.6]: https://github.com/erseco/facturascripts-plugin-ServiceRenewals/compare/1.5...1.6
+[1.5]: https://github.com/erseco/facturascripts-plugin-ServiceRenewals/compare/1.4...1.5
+[1.4]: https://github.com/erseco/facturascripts-plugin-ServiceRenewals/compare/1.3...1.4
+[1.3]: https://github.com/erseco/facturascripts-plugin-ServiceRenewals/compare/1.2...1.3
+[1.2]: https://github.com/erseco/facturascripts-plugin-ServiceRenewals/compare/1.1...1.2
+[1.1]: https://github.com/erseco/facturascripts-plugin-ServiceRenewals/compare/1.0...1.1
+[1.0]: https://github.com/erseco/facturascripts-plugin-ServiceRenewals/releases/tag/1.0
